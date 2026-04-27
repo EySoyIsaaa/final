@@ -258,7 +258,8 @@ public class MusicScannerPlugin extends Plugin {
       String normalizedSearch = search == null ? "" : search.trim().toLowerCase();
 
       for (int i = 0; i < persisted.length(); i++) {
-        JSObject track = persisted.getJSONObject(i);
+        JSONObject trackJson = persisted.getJSONObject(i);
+        JSObject track = new JSObject(trackJson.toString());
         if (normalizedSearch.isEmpty()) {
           filtered.add(track);
           continue;
@@ -720,7 +721,8 @@ public class MusicScannerPlugin extends Plugin {
   private JSObject findPersistedTrackById(String id) throws Exception {
     JSArray tracks = loadPersistedLibrary();
     for (int i = 0; i < tracks.length(); i++) {
-      JSObject track = tracks.getJSONObject(i);
+      JSONObject trackJson = tracks.getJSONObject(i);
+      JSObject track = new JSObject(trackJson.toString());
       if (id.equals(track.optString("id"))) {
         return track;
       }
@@ -734,7 +736,8 @@ public class MusicScannerPlugin extends Plugin {
       return;
     }
     for (int i = 0; i < list.length(); i++) {
-      JSObject existing = list.getJSONObject(i);
+      JSONObject existingJson = list.getJSONObject(i);
+      JSObject existing = new JSObject(existingJson.toString());
       if (id.equals(existing.optString("id"))) {
         list.put(i, track);
         return;
