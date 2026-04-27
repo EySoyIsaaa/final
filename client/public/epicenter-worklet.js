@@ -8,6 +8,9 @@
   var DENORMAL_FLOOR = 1e-24;
   var TWO_PI = Math.PI * 2;
   var EPICENTER_INTENSITY_HEADROOM = 0.75;
+  var EPICENTER_INTENSITY_MAX_SCALE = 0.5;
+  var EPICENTER_VOLUME_MAX_SCALE = 0.75;
+  var EPICENTER_OUTPUT_TRIM = 0.95;
   var BiquadFilter = class {
     constructor(type, freq, sr, Q = 0.707) {
       this.type = type;
@@ -120,7 +123,7 @@
       return [
         { name: "sweepFreq", defaultValue: 45, minValue: 27, maxValue: 63, automationRate: "k-rate" },
         { name: "width", defaultValue: 50, minValue: 0, maxValue: 100, automationRate: "k-rate" },
-        { name: "intensity", defaultValue: 50, minValue: 0, maxValue: 100, automationRate: "k-rate" },
+        { name: "intensity", defaultValue: 100, minValue: 0, maxValue: 100, automationRate: "k-rate" },
         { name: "balance", defaultValue: 50, minValue: 0, maxValue: 100, automationRate: "k-rate" },
         { name: "volume", defaultValue: 100, minValue: 0, maxValue: 100, automationRate: "k-rate" }
       ];
@@ -248,12 +251,14 @@
       const monoState = this.monoState;
       const blockSize = input[0].length;
       const subBuffer = new Float32Array(blockSize);
-      const intensityNorm = Math.max(0, Math.min(100, intensity)) / 100 * EPICENTER_INTENSITY_HEADROOM;
+      const intensityRawNorm = Math.max(0, Math.min(100, intensity)) / 100;
+      const intensityScaledNorm = intensityRawNorm * EPICENTER_INTENSITY_MAX_SCALE;
+      const intensityNorm = intensityScaledNorm * EPICENTER_INTENSITY_HEADROOM;
       const balanceNorm = Math.max(0, Math.min(100, balance)) / 100;
       const widthNorm = Math.max(0, Math.min(100, width)) / 100;
-      const volumeGain = Math.max(0, Math.min(1, volume / 100));
-      const synthAmount = 0.42 + intensityNorm * 1.28;
-      const bassProgramAmount = 0.68 + balanceNorm * 0.38;
+      const volumeGain = Math.max(0, Math.min(1, volume / 100 * EPICENTER_VOLUME_MAX_SCALE));
+      const synthAmount = 0.39 + intensityNorm * 1.12;
+      const bassProgramAmount = 0.64 + balanceNorm * 0.32;
       const lowMidBodyAmount = 0.12 + balanceNorm * 0.08;
       const lowMidDipAmount = (0.08 + intensityNorm * 0.16) * (0.45 + widthNorm * 0.3);
       const gateHoldSamples = Math.floor(sampleRate * (0.025 + intensityNorm * 0.06));
@@ -295,7 +300,7 @@
           const sample = this.denormalFloor(inChan[i]);
           const voicePath = state.voiceHighpass.process(sample);
           const voicePresence = state.voiceEnv.process(voicePath);
-          const voiceProtection = Math.max(0.5, 1 - voicePresence * (0.85 + intensityNorm * 0.3));
+          const voiceProtection = Math.max(0.56, 1 - voicePresence * (0.9 + intensityNorm * 0.34));
           const bassProgram = state.bassLowpass.process(sample);
           const body = state.lowMidBody.process(sample);
           const dip = state.lowMidDip.process(sample);
@@ -303,7 +308,7 @@
           const generatedSub = state.subLowpass.process(subBuffer[i]) * (0.4 + voiceProtection * 0.6);
           let mixed = voicePath + shapedBassProgram + generatedSub;
           const protectionGain = 0.94 + voiceProtection * 0.06;
-          mixed *= volumeGain * protectionGain;
+          mixed *= volumeGain * protectionGain * EPICENTER_OUTPUT_TRIM;
           mixed = Math.tanh(mixed * 0.94) / Math.tanh(0.94);
           mixed = state.outputDcHighpass.process(mixed);
           outChan[i] = this.denormalFloor(mixed);
