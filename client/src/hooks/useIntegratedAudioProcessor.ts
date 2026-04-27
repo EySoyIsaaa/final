@@ -119,8 +119,8 @@ export function useIntegratedAudioProcessor(): IntegratedAudioController {
   const dspParamsRef = useRef<StreamingParams>({
     sweepFreq: 45,
     width: 50,
-    intensity: 50,
-    balance: 50,
+    intensity: 100,
+    balance: 100,
     volume: 100,
   });
   
@@ -201,7 +201,7 @@ export function useIntegratedAudioProcessor(): IntegratedAudioController {
             sweepFreq: 45,
             width: 50,
             intensity: 0, // Comenzar con 0 (desactivado)
-            balance: 50,
+            balance: 100,
             volume: 100,
           },
         });

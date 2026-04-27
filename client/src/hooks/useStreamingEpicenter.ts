@@ -64,8 +64,8 @@ export function useStreamingEpicenter(): StreamingController {
           parameterData: {
             sweepFreq: 45,
             width: 50,
-            intensity: 50,
-            balance: 50,
+            intensity: 100,
+            balance: 100,
             volume: 100,
           },
         });
