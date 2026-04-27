@@ -1,0 +1,226 @@
+[2026-04-26T01:54:27.145Z] {"timestamp":1777168465133,"level":"DEBUG","args":["[Manus] Debug collector initialized (no rrweb, UI events only)"],"stack":null}
+[2026-04-26T01:54:27.145Z] {"timestamp":1777168465196,"level":"DEBUG","args":["[vite] connected."],"stack":null}
+[2026-04-26T01:54:27.145Z] {"timestamp":1777168466986,"level":"INFO","args":["%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools","font-weight:bold"],"stack":null}
+[2026-04-26T01:54:27.145Z] {"timestamp":1777168467110,"level":"DEBUG","args":["[Library] Loading from IndexedDB..."],"stack":null}
+[2026-04-26T01:54:27.145Z] {"timestamp":1777168467111,"level":"DEBUG","args":["🔍 [MusicLibrary] UserAgent:","mozilla/5.0 (windows nt 10.0; win64; x64) applewebkit/537.36 (khtml, like gecko) chrome/147.0.0.0 safari/537.36"],"stack":null}
+[2026-04-26T01:54:27.145Z] {"timestamp":1777168467111,"level":"DEBUG","args":["🔍 [MusicLibrary] isAndroid:","false"],"stack":null}
+[2026-04-26T01:54:29.134Z] {"timestamp":1777168467164,"level":"LOG","args":["[MusicLibraryDB] Database initialized v4"],"stack":null}
+[2026-04-26T01:54:29.134Z] {"timestamp":1777168467164,"level":"DEBUG","args":["[Library] Found 0 tracks"],"stack":null}
+[2026-04-26T01:54:29.134Z] {"timestamp":1777168467165,"level":"INFO","args":["[Library] Loaded 0 tracks successfully"],"stack":null}
+[2026-04-26T01:54:29.134Z] {"timestamp":1777168467165,"level":"LOG","args":["[Playlists] Loaded 0 playlists"],"stack":null}
+[2026-04-26T01:54:35.149Z] {"timestamp":1777168473326,"level":"DEBUG","args":["🔍 [MusicLibrary] UserAgent:","mozilla/5.0 (windows nt 10.0; win64; x64) applewebkit/537.36 (khtml, like gecko) chrome/147.0.0.0 safari/537.36"],"stack":null}
+[2026-04-26T01:54:35.149Z] {"timestamp":1777168473326,"level":"DEBUG","args":["🔍 [MusicLibrary] isAndroid:","false"],"stack":null}
+[2026-04-26T01:54:35.149Z] {"timestamp":1777168473326,"level":"DEBUG","args":["🔍 [MusicLibrary] UserAgent:","mozilla/5.0 (windows nt 10.0; win64; x64) applewebkit/537.36 (khtml, like gecko) chrome/147.0.0.0 safari/537.36"],"stack":null}
+[2026-04-26T01:54:35.149Z] {"timestamp":1777168473326,"level":"DEBUG","args":["🔍 [MusicLibrary] isAndroid:","false"],"stack":null}
+[2026-04-26T01:54:41.134Z] {"timestamp":1777168480058,"level":"DEBUG","args":["🔍 [MusicLibrary] UserAgent:","mozilla/5.0 (windows nt 10.0; win64; x64) applewebkit/537.36 (khtml, like gecko) chrome/147.0.0.0 safari/537.36"],"stack":null}
+[2026-04-26T01:54:41.134Z] {"timestamp":1777168480058,"level":"DEBUG","args":["🔍 [MusicLibrary] isAndroid:","false"],"stack":null}
+[2026-04-26T01:54:41.134Z] {"timestamp":1777168480058,"level":"DEBUG","args":["🔍 [MusicLibrary] UserAgent:","mozilla/5.0 (windows nt 10.0; win64; x64) applewebkit/537.36 (khtml, like gecko) chrome/147.0.0.0 safari/537.36"],"stack":null}
+[2026-04-26T01:54:41.134Z] {"timestamp":1777168480058,"level":"DEBUG","args":["🔍 [MusicLibrary] isAndroid:","false"],"stack":null}
+[2026-04-26T01:54:51.134Z] {"timestamp":1777168489433,"level":"DEBUG","args":["[Library] Saved track: Te Quiero"],"stack":null}
+[2026-04-26T01:54:53.133Z] {"timestamp":1777168491265,"level":"LOG","args":["[LastTrack] Saved last track:","track-1777168489291-xom0x1pp4"],"stack":null}
+[2026-04-26T01:54:53.133Z] {"timestamp":1777168491335,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:54:55.134Z] {"timestamp":1777168494810,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:54:59.139Z] {"timestamp":1777168499136,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:55:01.140Z] {"timestamp":1777168500487,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:55:23.135Z] {"timestamp":1777168521438,"level":"DEBUG","args":["🔍 [MusicLibrary] UserAgent:","mozilla/5.0 (windows nt 10.0; win64; x64) applewebkit/537.36 (khtml, like gecko) chrome/147.0.0.0 safari/537.36"],"stack":null}
+[2026-04-26T01:55:23.135Z] {"timestamp":1777168521438,"level":"DEBUG","args":["🔍 [MusicLibrary] isAndroid:","false"],"stack":null}
+[2026-04-26T01:55:33.135Z] {"timestamp":1777168532892,"level":"DEBUG","args":["[Library] Saved track:  Julion Alvarez Y Su Norteño Banda - Rey Sin Reina"],"stack":null}
+[2026-04-26T01:55:37.135Z] {"timestamp":1777168535859,"level":"LOG","args":["[LastTrack] Saved last track:","track-1777168489291-xom0x1pp4"],"stack":null}
+[2026-04-26T01:55:37.135Z] {"timestamp":1777168535865,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:55:41.142Z] {"timestamp":1777168540585,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:55:43.140Z] {"timestamp":1777168541285,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:55:43.140Z] {"timestamp":1777168541913,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:55:43.140Z] {"timestamp":1777168542512,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:55:45.142Z] {"timestamp":1777168544120,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:55:45.142Z] {"timestamp":1777168544848,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:55:47.136Z] {"timestamp":1777168545506,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:56:01.137Z] {"timestamp":1777168559203,"level":"LOG","args":["[AutoAdjustment]",{"presetId":"HIFI_NEUTRAL","presetName":"HiFi Neutral","debug":{"bassScore":0.5494786580403646,"midScore":0.5421130077831738,"voiceScore":0.4409476396772596,"brightScore":0.40976842175062966,"averageEnergyDb":-70.3852826073056,"ruleMatched":"default-hifi-neutral"}}],"stack":null}
+[2026-04-26T01:56:01.137Z] {"timestamp":1777168559210,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:56:07.142Z] {"timestamp":1777168565899,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:56:11.137Z] {"timestamp":1777168569791,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:56:11.137Z] {"timestamp":1777168570534,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:56:13.141Z] {"timestamp":1777168571547,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:56:13.141Z] {"timestamp":1777168572473,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:56:27.135Z] {"timestamp":1777168585736,"level":"DEBUG","args":["🔍 [MusicLibrary] UserAgent:","mozilla/5.0 (windows nt 10.0; win64; x64) applewebkit/537.36 (khtml, like gecko) chrome/147.0.0.0 safari/537.36"],"stack":null}
+[2026-04-26T01:56:27.135Z] {"timestamp":1777168585736,"level":"DEBUG","args":["🔍 [MusicLibrary] isAndroid:","false"],"stack":null}
+[2026-04-26T01:56:35.136Z] {"timestamp":1777168594046,"level":"DEBUG","args":["🔍 [MusicLibrary] UserAgent:","mozilla/5.0 (windows nt 10.0; win64; x64) applewebkit/537.36 (khtml, like gecko) chrome/147.0.0.0 safari/537.36"],"stack":null}
+[2026-04-26T01:56:35.136Z] {"timestamp":1777168594046,"level":"DEBUG","args":["🔍 [MusicLibrary] isAndroid:","false"],"stack":null}
+[2026-04-26T01:56:41.135Z] {"timestamp":1777168599536,"level":"DEBUG","args":["[Library] Saved track: The Winner Takes It All"],"stack":null}
+[2026-04-26T01:56:41.135Z] {"timestamp":1777168601046,"level":"LOG","args":["[LastTrack] Saved last track:","track-1777168489291-xom0x1pp4"],"stack":null}
+[2026-04-26T01:56:41.135Z] {"timestamp":1777168601055,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:56:51.141Z] {"timestamp":1777168610296,"level":"DEBUG","args":["🔍 [MusicLibrary] UserAgent:","mozilla/5.0 (windows nt 10.0; win64; x64) applewebkit/537.36 (khtml, like gecko) chrome/147.0.0.0 safari/537.36"],"stack":null}
+[2026-04-26T01:56:51.141Z] {"timestamp":1777168610296,"level":"DEBUG","args":["🔍 [MusicLibrary] isAndroid:","false"],"stack":null}
+[2026-04-26T01:56:55.143Z] {"timestamp":1777168613540,"level":"LOG","args":["[AutoAdjustment]",{"presetId":"LOUDNESS","presetName":"Loudness","debug":{"bassScore":0.5923733859592014,"midScore":0.5785971179309192,"voiceScore":0.4879774379730227,"brightScore":0.21359597447167888,"averageEnergyDb":-73.72417460850309,"ruleMatched":"low-overall-energy"}}],"stack":null}
+[2026-04-26T01:56:55.143Z] {"timestamp":1777168613549,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:56:57.134Z] {"timestamp":1777168617114,"level":"DEBUG","args":["[Library] Duplicate found: (04) Te Quiero.flac"],"stack":null}
+[2026-04-26T01:56:59.134Z] {"timestamp":1777168617256,"level":"DEBUG","args":["[Library] Saved track: Glimpse of Us"],"stack":null}
+[2026-04-26T01:56:59.135Z] {"timestamp":1777168617414,"level":"DEBUG","args":["[Library] Saved track: A veces lloro"],"stack":null}
+[2026-04-26T01:56:59.135Z] {"timestamp":1777168617572,"level":"DEBUG","args":["[Library] Saved track: La intención"],"stack":null}
+[2026-04-26T01:56:59.135Z] {"timestamp":1777168617607,"level":"DEBUG","args":["[Library] Saved track: Te Quiero"],"stack":null}
+[2026-04-26T01:56:59.135Z] {"timestamp":1777168617720,"level":"DEBUG","args":["[Library] Saved track: The Crowd"],"stack":null}
+[2026-04-26T01:56:59.135Z] {"timestamp":1777168617772,"level":"DEBUG","args":["[Library] Saved track: Without A Warning"],"stack":null}
+[2026-04-26T01:56:59.135Z] {"timestamp":1777168617944,"level":"DEBUG","args":["[Library] Saved track: Without A Warning"],"stack":null}
+[2026-04-26T01:56:59.135Z] {"timestamp":1777168618146,"level":"DEBUG","args":["[Library] Saved track: One More Time"],"stack":null}
+[2026-04-26T01:56:59.135Z] {"timestamp":1777168618240,"level":"DEBUG","args":["[Library] Saved track: Necesito Decirte"],"stack":null}
+[2026-04-26T01:56:59.135Z] {"timestamp":1777168618512,"level":"DEBUG","args":["[Library] Saved track: Vivir Sin Aire (Ft. Carin León)"],"stack":null}
+[2026-04-26T01:56:59.135Z] {"timestamp":1777168618683,"level":"DEBUG","args":["[Library] Saved track: Closing Night"],"stack":null}
+[2026-04-26T01:56:59.135Z] {"timestamp":1777168618691,"level":"DEBUG","args":["[Library] Duplicate found: 02 - ABBA - The Winner Takes It All.flac"],"stack":null}
+[2026-04-26T01:56:59.135Z] {"timestamp":1777168619060,"level":"DEBUG","args":["[Library] Saved track: Selfless"],"stack":null}
+[2026-04-26T01:57:01.135Z] {"timestamp":1777168619198,"level":"DEBUG","args":["[Library] Saved track: SLOW DANCING IN THE DARK"],"stack":null}
+[2026-04-26T01:57:01.135Z] {"timestamp":1777168619365,"level":"DEBUG","args":["[Library] Saved track: Cry For Me"],"stack":null}
+[2026-04-26T01:57:01.135Z] {"timestamp":1777168619502,"level":"DEBUG","args":["[Library] Saved track: Pongámonos De Acuerdo"],"stack":null}
+[2026-04-26T01:57:01.135Z] {"timestamp":1777168619645,"level":"DEBUG","args":["[Library] Saved track: ROCKSTAR"],"stack":null}
+[2026-04-26T01:57:01.135Z] {"timestamp":1777168619788,"level":"DEBUG","args":["[Library] Saved track: Die For You"],"stack":null}
+[2026-04-26T01:57:01.135Z] {"timestamp":1777168619921,"level":"DEBUG","args":["[Library] Saved track: Ni Lo Intentes"],"stack":null}
+[2026-04-26T01:57:01.135Z] {"timestamp":1777168620033,"level":"DEBUG","args":["[Library] Saved track: El águila blanca"],"stack":null}
+[2026-04-26T01:57:01.135Z] {"timestamp":1777168620151,"level":"DEBUG","args":["[Library] Saved track: Increíble"],"stack":null}
+[2026-04-26T01:57:01.135Z] {"timestamp":1777168620316,"level":"DEBUG","args":["[Library] Saved track: Eso Nomas"],"stack":null}
+[2026-04-26T01:57:01.135Z] {"timestamp":1777168620514,"level":"DEBUG","args":["[Library] Saved track: São Paulo"],"stack":null}
+[2026-04-26T01:57:01.135Z] {"timestamp":1777168620645,"level":"DEBUG","args":["[Library] Saved track: End Of Beginning"],"stack":null}
+[2026-04-26T01:57:01.135Z] {"timestamp":1777168620830,"level":"DEBUG","args":["[Library] Saved track: Lost on you"],"stack":null}
+[2026-04-26T01:57:01.135Z] {"timestamp":1777168620985,"level":"DEBUG","args":["[Library] Saved track: SERPIENTE"],"stack":null}
+[2026-04-26T01:57:03.134Z] {"timestamp":1777168621163,"level":"DEBUG","args":["[Library] Saved track: LA PATRULLA"],"stack":null}
+[2026-04-26T01:57:03.134Z] {"timestamp":1777168621237,"level":"DEBUG","args":["[Library] Saved track: COQUETA"],"stack":null}
+[2026-04-26T01:57:03.134Z] {"timestamp":1777168621315,"level":"DEBUG","args":["[Library] Saved track: See You Again"],"stack":null}
+[2026-04-26T01:57:03.134Z] {"timestamp":1777168621478,"level":"DEBUG","args":["[Library] Saved track: Tiene espinas el rosal"],"stack":null}
+[2026-04-26T01:57:03.134Z] {"timestamp":1777168621600,"level":"DEBUG","args":["[Library] Saved track: Me Vas A Echar De Menos"],"stack":null}
+[2026-04-26T01:57:03.134Z] {"timestamp":1777168621878,"level":"DEBUG","args":["[Library] Saved track: Rubicon"],"stack":null}
+[2026-04-26T01:57:03.134Z] {"timestamp":1777168622012,"level":"DEBUG","args":["[Library] Saved track: Society"],"stack":null}
+[2026-04-26T01:57:03.134Z] {"timestamp":1777168622261,"level":"DEBUG","args":["[Library] Saved track: Te Quiero con Carin León"],"stack":null}
+[2026-04-26T01:57:03.134Z] {"timestamp":1777168622417,"level":"DEBUG","args":["[Library] Saved track: 4 LAST BREATH"],"stack":null}
+[2026-04-26T01:57:03.134Z] {"timestamp":1777168622591,"level":"DEBUG","args":["[Library] Saved track: Take Me Back To LA"],"stack":null}
+[2026-04-26T01:57:03.134Z] {"timestamp":1777168622782,"level":"DEBUG","args":["[Library] Saved track: One Last Breath"],"stack":null}
+[2026-04-26T01:57:05.135Z] {"timestamp":1777168623671,"level":"DEBUG","args":["[Library] Saved track: My Way"],"stack":null}
+[2026-04-26T01:57:05.135Z] {"timestamp":1777168623830,"level":"DEBUG","args":["[Library] Saved track: Otro atardecer"],"stack":null}
+[2026-04-26T01:57:05.135Z] {"timestamp":1777168624033,"level":"DEBUG","args":["[Library] Saved track: Billie Jean"],"stack":null}
+[2026-04-26T01:57:05.135Z] {"timestamp":1777168624323,"level":"DEBUG","args":["[Library] Saved track: Ghost Town"],"stack":null}
+[2026-04-26T01:57:05.135Z] {"timestamp":1777168624449,"level":"DEBUG","args":["[Library] Saved track: The Abyss"],"stack":null}
+[2026-04-26T01:57:05.135Z] {"timestamp":1777168624658,"level":"DEBUG","args":["[Library] Saved track: Man I Need"],"stack":null}
+[2026-04-26T01:57:05.135Z] {"timestamp":1777168624891,"level":"DEBUG","args":["[Library] Saved track: Besame mama"],"stack":null}
+[2026-04-26T01:57:05.135Z] {"timestamp":1777168625048,"level":"DEBUG","args":["[Library] Saved track: Open Hearts"],"stack":null}
+[2026-04-26T01:57:07.150Z] {"timestamp":1777168625246,"level":"DEBUG","args":["[Library] Saved track: Perdóname"],"stack":null}
+[2026-04-26T01:57:07.150Z] {"timestamp":1777168625430,"level":"DEBUG","args":["[Library] Saved track: Timeless"],"stack":null}
+[2026-04-26T01:57:07.150Z] {"timestamp":1777168625657,"level":"DEBUG","args":["[Library] Saved track: Vvs"],"stack":null}
+[2026-04-26T01:57:07.150Z] {"timestamp":1777168625883,"level":"DEBUG","args":["[Library] Saved track: Other people"],"stack":null}
+[2026-04-26T01:57:07.150Z] {"timestamp":1777168626037,"level":"DEBUG","args":["[Library] Saved track: Give Me Mercy"],"stack":null}
+[2026-04-26T01:57:07.150Z] {"timestamp":1777168626470,"level":"DEBUG","args":["[Library] Saved track: BRUCE WAYNE"],"stack":null}
+[2026-04-26T01:57:07.150Z] {"timestamp":1777168626613,"level":"DEBUG","args":["[Library] Saved track: 10 - All THE LOVE - FREESTYLE"],"stack":null}
+[2026-04-26T01:57:07.150Z] {"timestamp":1777168626784,"level":"DEBUG","args":["[Library] Saved track: Runaway"],"stack":null}
+[2026-04-26T01:57:09.136Z] {"timestamp":1777168627243,"level":"DEBUG","args":["[Library] Saved track: HOLLYWOOD"],"stack":null}
+[2026-04-26T01:57:09.137Z] {"timestamp":1777168627492,"level":"DEBUG","args":["[Library] Saved track: 11 - ALL THE LOVE"],"stack":null}
+[2026-04-26T01:57:09.137Z] {"timestamp":1777168627770,"level":"DEBUG","args":["[Library] Saved track: Fragments of Time"],"stack":null}
+[2026-04-26T01:57:09.137Z] {"timestamp":1777168628160,"level":"DEBUG","args":["[Library] Saved track: No One Noticed"],"stack":null}
+[2026-04-26T01:57:09.137Z] {"timestamp":1777168628325,"level":"DEBUG","args":["[Library] Saved track: Red Terror"],"stack":null}
+[2026-04-26T01:57:09.137Z] {"timestamp":1777168628770,"level":"DEBUG","args":["[Library] Saved track: ICE"],"stack":null}
+[2026-04-26T01:57:09.137Z] {"timestamp":1777168629041,"level":"DEBUG","args":["[Library] Saved track: La People"],"stack":null}
+[2026-04-26T01:57:11.138Z] {"timestamp":1777168629302,"level":"DEBUG","args":["[Library] Saved track: PIÉNSALO"],"stack":null}
+[2026-04-26T01:57:11.138Z] {"timestamp":1777168629697,"level":"DEBUG","args":["[Library] Saved track: SOLICITADO"],"stack":null}
+[2026-04-26T01:57:11.138Z] {"timestamp":1777168629933,"level":"DEBUG","args":["[Library] Saved track: Die With A Smile"],"stack":null}
+[2026-04-26T01:57:11.138Z] {"timestamp":1777168630021,"level":"DEBUG","args":["[Library] Saved track: 14 - Julion Alvarez Y Su Norteño Banda - Lo Tienes Todo"],"stack":null}
+[2026-04-26T01:57:11.138Z] {"timestamp":1777168630361,"level":"DEBUG","args":["[Library] Saved track: Nueva vida"],"stack":null}
+[2026-04-26T01:57:11.138Z] {"timestamp":1777168630636,"level":"DEBUG","args":["[Library] Saved track: A TU NOMBRE"],"stack":null}
+[2026-04-26T01:57:11.138Z] {"timestamp":1777168630953,"level":"DEBUG","args":["[Library] Saved track: Tiene Espinas El Rosal"],"stack":null}
+[2026-04-26T01:57:13.138Z] {"timestamp":1777168631344,"level":"DEBUG","args":["[Library] Saved track: En Definitiva"],"stack":null}
+[2026-04-26T01:57:13.138Z] {"timestamp":1777168632061,"level":"DEBUG","args":["[Library] Saved track: VINO TINTO"],"stack":null}
+[2026-04-26T01:57:13.138Z] {"timestamp":1777168632616,"level":"DEBUG","args":["[Library] Saved track: DtMF"],"stack":null}
+[2026-04-26T01:57:13.139Z] {"timestamp":1777168633062,"level":"DEBUG","args":["[Library] Saved track: Lagunas"],"stack":null}
+[2026-04-26T01:57:15.165Z] {"timestamp":1777168633352,"level":"DEBUG","args":["[Library] Saved track: Algo De Mí"],"stack":null}
+[2026-04-26T01:57:15.165Z] {"timestamp":1777168633909,"level":"DEBUG","args":["[Library] Saved track: De Musica Ligera"],"stack":null}
+[2026-04-26T01:57:15.165Z] {"timestamp":1777168634121,"level":"DEBUG","args":["[Library] Saved track: Here With Me"],"stack":null}
+[2026-04-26T01:57:15.165Z] {"timestamp":1777168634322,"level":"DEBUG","args":["[Library] Saved track: TEKA"],"stack":null}
+[2026-04-26T01:57:15.166Z] {"timestamp":1777168634622,"level":"DEBUG","args":["[Library] Saved track: 26 Friday Im In Love"],"stack":null}
+[2026-04-26T01:57:15.166Z] {"timestamp":1777168634711,"level":"DEBUG","args":["[Library] Saved track: Una pagina mas"],"stack":null}
+[2026-04-26T01:57:15.166Z] {"timestamp":1777168634799,"level":"DEBUG","args":["[Library] Saved track: ALCH SI"],"stack":null}
+[2026-04-26T01:57:15.166Z] {"timestamp":1777168634942,"level":"DEBUG","args":["[Library] Saved track: LADY GAGA"],"stack":null}
+[2026-04-26T01:57:17.134Z] {"timestamp":1777168635240,"level":"DEBUG","args":["[Library] Saved track: Golden"],"stack":null}
+[2026-04-26T01:57:17.134Z] {"timestamp":1777168635429,"level":"DEBUG","args":["[Library] Saved track: Maneater"],"stack":null}
+[2026-04-26T01:57:17.134Z] {"timestamp":1777168635658,"level":"DEBUG","args":["[Library] Saved track: Out Of Touch"],"stack":null}
+[2026-04-26T01:57:17.134Z] {"timestamp":1777168635900,"level":"DEBUG","args":["[Library] Saved track: El paciente"],"stack":null}
+[2026-04-26T01:57:17.134Z] {"timestamp":1777168636014,"level":"DEBUG","args":["[Library] Saved track: El vals del olvido"],"stack":null}
+[2026-04-26T01:57:17.134Z] {"timestamp":1777168636290,"level":"DEBUG","args":["[Library] Saved track: Alley Cat"],"stack":null}
+[2026-04-26T01:57:17.134Z] {"timestamp":1777168636500,"level":"DEBUG","args":["[Library] Saved track: Billie Bossa Nova"],"stack":null}
+[2026-04-26T01:57:17.134Z] {"timestamp":1777168636818,"level":"DEBUG","args":["[Library] Saved track: Happier Than Ever"],"stack":null}
+[2026-04-26T01:57:17.134Z] {"timestamp":1777168637058,"level":"DEBUG","args":["[Library] Saved track: BIRDS OF A FEATHER"],"stack":null}
+[2026-04-26T01:57:19.135Z] {"timestamp":1777168637305,"level":"DEBUG","args":["[Library] Saved track: WILDFLOWER"],"stack":null}
+[2026-04-26T01:57:19.135Z] {"timestamp":1777168637636,"level":"DEBUG","args":["[Library] Saved track: L’AMOUR DE MA VIE"],"stack":null}
+[2026-04-26T01:57:19.135Z] {"timestamp":1777168637781,"level":"DEBUG","args":["[Library] Saved track: Primera cita"],"stack":null}
+[2026-04-26T01:57:19.135Z] {"timestamp":1777168638486,"level":"DEBUG","args":["[Library] Saved track: (I Just) Died in Your Arms"],"stack":null}
+[2026-04-26T01:57:19.135Z] {"timestamp":1777168638722,"level":"DEBUG","args":["[Library] Saved track: One More Time"],"stack":null}
+[2026-04-26T01:57:19.135Z] {"timestamp":1777168639029,"level":"DEBUG","args":["[Library] Saved track: Get Lucky"],"stack":null}
+[2026-04-26T01:57:21.135Z] {"timestamp":1777168639209,"level":"DEBUG","args":["[Library] Saved track: You Make My Dreams"],"stack":null}
+[2026-04-26T01:57:21.135Z] {"timestamp":1777168639309,"level":"DEBUG","args":["[Library] Saved track: Teka"],"stack":null}
+[2026-04-26T01:57:21.135Z] {"timestamp":1777168639436,"level":"DEBUG","args":["[Library] Saved track: GAS CHAMBERS [V3]"],"stack":null}
+[2026-04-26T01:57:21.135Z] {"timestamp":1777168639500,"level":"DEBUG","args":["[Library] Saved track: GAS_CHAMBERS_V3.rebassed"],"stack":null}
+[2026-04-26T01:57:21.135Z] {"timestamp":1777168639507,"level":"DEBUG","args":["[Library] Duplicate found: Julion Alvarez Y Su Norteño Banda - Rey Sin Reina.mp3"],"stack":null}
+[2026-04-26T01:57:21.135Z] {"timestamp":1777168639689,"level":"DEBUG","args":["[Library] Saved track: So Easy (To Fall in Love)"],"stack":null}
+[2026-04-26T01:57:21.135Z] {"timestamp":1777168639811,"level":"DEBUG","args":["[Library] Saved track: bckpckbyz"],"stack":null}
+[2026-04-26T01:57:21.135Z] {"timestamp":1777168639965,"level":"DEBUG","args":["[Library] Saved track: RELOJ"],"stack":null}
+[2026-04-26T01:57:21.135Z] {"timestamp":1777168640046,"level":"DEBUG","args":["[Library] Saved track: Scorpions - Wind Of Change"],"stack":null}
+[2026-04-26T01:57:21.135Z] {"timestamp":1777168640280,"level":"DEBUG","args":["[Library] Saved track: back to friends"],"stack":null}
+[2026-04-26T01:57:21.135Z] {"timestamp":1777168640414,"level":"DEBUG","args":["[Library] Saved track: Here Comes the Sun"],"stack":null}
+[2026-04-26T01:57:21.135Z] {"timestamp":1777168640699,"level":"DEBUG","args":["[Library] Saved track: ALL THE LOVE"],"stack":null}
+[2026-04-26T01:57:25.136Z] {"timestamp":1777168644604,"level":"DEBUG","args":["🔍 [MusicLibrary] UserAgent:","mozilla/5.0 (windows nt 10.0; win64; x64) applewebkit/537.36 (khtml, like gecko) chrome/147.0.0.0 safari/537.36"],"stack":null}
+[2026-04-26T01:57:25.136Z] {"timestamp":1777168644604,"level":"DEBUG","args":["🔍 [MusicLibrary] isAndroid:","false"],"stack":null}
+[2026-04-26T01:57:27.150Z] {"timestamp":1777168646078,"level":"LOG","args":["[LastTrack] Saved last track:","track-1777168489291-xom0x1pp4"],"stack":null}
+[2026-04-26T01:57:27.150Z] {"timestamp":1777168646087,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:57:29.145Z] {"timestamp":1777168647651,"level":"LOG","args":["[LastTrack] Saved last track:","track-1777168489291-xom0x1pp4"],"stack":null}
+[2026-04-26T01:57:29.145Z] {"timestamp":1777168647654,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:57:31.140Z] {"timestamp":1777168649264,"level":"LOG","args":["[LastTrack] Saved last track:","track-1777168489291-xom0x1pp4"],"stack":null}
+[2026-04-26T01:57:31.140Z] {"timestamp":1777168649270,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:57:33.136Z] {"timestamp":1777168651309,"level":"DEBUG","args":["🔍 [MusicLibrary] UserAgent:","mozilla/5.0 (windows nt 10.0; win64; x64) applewebkit/537.36 (khtml, like gecko) chrome/147.0.0.0 safari/537.36"],"stack":null}
+[2026-04-26T01:57:33.136Z] {"timestamp":1777168651309,"level":"DEBUG","args":["🔍 [MusicLibrary] isAndroid:","false"],"stack":null}
+[2026-04-26T01:57:35.135Z] {"timestamp":1777168653590,"level":"LOG","args":["[LastTrack] Saved last track:","track-1777168489291-xom0x1pp4"],"stack":null}
+[2026-04-26T01:57:35.135Z] {"timestamp":1777168653595,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:57:35.135Z] {"timestamp":1777168654339,"level":"LOG","args":["[LastTrack] Saved last track:","track-1777168489291-xom0x1pp4"],"stack":null}
+[2026-04-26T01:57:35.135Z] {"timestamp":1777168654357,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:57:37.136Z] {"timestamp":1777168655219,"level":"LOG","args":["[LastTrack] Saved last track:","track-1777168489291-xom0x1pp4"],"stack":null}
+[2026-04-26T01:57:37.136Z] {"timestamp":1777168655234,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:57:39.146Z] {"timestamp":1777168658249,"level":"LOG","args":["[AutoAdjustment]",{"presetId":"LOUDNESS","presetName":"Loudness","debug":{"bassScore":0.685564931233724,"midScore":0.5568472711603203,"voiceScore":0.3299647002749972,"brightScore":0.11490355295202304,"averageEnergyDb":-85.60586071922664,"ruleMatched":"low-overall-energy"}}],"stack":null}
+[2026-04-26T01:57:39.146Z] {"timestamp":1777168658259,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:57:41.137Z] {"timestamp":1777168659814,"level":"LOG","args":["[AutoAdjustment]",{"presetId":"LOUDNESS","presetName":"Loudness","debug":{"bassScore":0.6964705064561633,"midScore":0.5604051845424526,"voiceScore":0.3194410228729244,"brightScore":0.0805117272370195,"averageEnergyDb":-87.37493320646743,"ruleMatched":"low-overall-energy"}}],"stack":null}
+[2026-04-26T01:57:41.137Z] {"timestamp":1777168659825,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:57:43.136Z] {"timestamp":1777168661416,"level":"LOG","args":["[AutoAdjustment]",{"presetId":"LOUDNESS","presetName":"Loudness","debug":{"bassScore":0.7053772311740452,"midScore":0.5511257293059661,"voiceScore":0.3271112706926131,"brightScore":0.08757413887683264,"averageEnergyDb":-86.80197010948544,"ruleMatched":"low-overall-energy"}}],"stack":null}
+[2026-04-26T01:57:43.136Z] {"timestamp":1777168661431,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:57:49.137Z] {"timestamp":1777168667863,"level":"LOG","args":["[AutoAdjustment]",{"presetId":"BASS_PARTY","presetName":"Bass Party","debug":{"bassScore":0.7976031324598525,"midScore":0.6055507918807479,"voiceScore":0.44975737995571574,"brightScore":0.26834383145952656,"averageEnergyDb":-74.14964468819754,"ruleMatched":"bass-heavy-dark"}}],"stack":null}
+[2026-04-26T01:57:49.137Z] {"timestamp":1777168667878,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:58:07.136Z] {"timestamp":1777168686079,"level":"LOG","args":["[LastTrack] Saved last track:","track-1777168489291-xom0x1pp4"],"stack":null}
+[2026-04-26T01:58:07.136Z] {"timestamp":1777168686081,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:58:09.150Z] {"timestamp":1777168687263,"level":"LOG","args":["[AutoAdjustment]",{"presetId":"BASS_PARTY","presetName":"Bass Party","debug":{"bassScore":0.8286649407280816,"midScore":0.6026073659719288,"voiceScore":0.4852293067508272,"brightScore":0.3350615479467442,"averageEnergyDb":-69.8639359247117,"ruleMatched":"bass-heavy-dark"}}],"stack":null}
+[2026-04-26T01:58:09.150Z] {"timestamp":1777168687267,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:58:19.136Z] {"timestamp":1777168698987,"level":"LOG","args":["[AutoAdjustment]",{"presetId":"BASS_PARTY","presetName":"Bass Party","debug":{"bassScore":0.8167485385470921,"midScore":0.6011614779452304,"voiceScore":0.4981092410617402,"brightScore":0.36569986979166674,"averageEnergyDb":-67.93728532337013,"ruleMatched":"bass-heavy-dark"}}],"stack":null}
+[2026-04-26T01:58:19.136Z] {"timestamp":1777168698993,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:58:27.135Z] {"timestamp":1777168706298,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:58:27.135Z] {"timestamp":1777168707020,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:58:31.143Z] {"timestamp":1777168710281,"level":"LOG","args":["[LastTrack] Saved last track:","track-1777168489291-xom0x1pp4"],"stack":null}
+[2026-04-26T01:58:31.143Z] {"timestamp":1777168710292,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:58:35.134Z] {"timestamp":1777168713631,"level":"LOG","args":["[LastTrack] Saved last track:","track-1777168489291-xom0x1pp4"],"stack":null}
+[2026-04-26T01:58:35.134Z] {"timestamp":1777168713637,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:58:37.135Z] {"timestamp":1777168715304,"level":"LOG","args":["[LastTrack] Saved last track:","track-1777168489291-xom0x1pp4"],"stack":null}
+[2026-04-26T01:58:37.135Z] {"timestamp":1777168715308,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:58:37.135Z] {"timestamp":1777168716223,"level":"LOG","args":["[LastTrack] Saved last track:","track-1777168489291-xom0x1pp4"],"stack":null}
+[2026-04-26T01:58:37.135Z] {"timestamp":1777168716227,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:58:39.134Z] {"timestamp":1777168717621,"level":"LOG","args":["[LastTrack] Saved last track:","track-1777168489291-xom0x1pp4"],"stack":null}
+[2026-04-26T01:58:39.134Z] {"timestamp":1777168717622,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:58:43.142Z] {"timestamp":1777168722526,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:58:45.141Z] {"timestamp":1777168723295,"level":"LOG","args":["[AutoAdjustment]",{"presetId":"BASS_PARTY","presetName":"Bass Party","debug":{"bassScore":0.8669967142740885,"midScore":0.6361217757674666,"voiceScore":0.519588777754042,"brightScore":0.3198972011712409,"averageEnergyDb":-68.2863597506568,"ruleMatched":"bass-heavy-dark"}}],"stack":null}
+[2026-04-26T01:58:45.141Z] {"timestamp":1777168723301,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:58:45.141Z] {"timestamp":1777168724518,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:58:47.135Z] {"timestamp":1777168726537,"level":"LOG","args":["[AutoAdjustment]",{"presetId":"BASS_PARTY","presetName":"Bass Party","debug":{"bassScore":0.9180206976996529,"midScore":0.6234301629510368,"voiceScore":0.48264794243706555,"brightScore":0.2358147634167886,"averageEnergyDb":-73.47715514046806,"ruleMatched":"bass-heavy-dark"}}],"stack":null}
+[2026-04-26T01:58:47.135Z] {"timestamp":1777168726547,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:58:51.148Z] {"timestamp":1777168730377,"level":"LOG","args":["[AutoAdjustment]",{"presetId":"BASS_PARTY","presetName":"Bass Party","debug":{"bassScore":0.9646737501356336,"midScore":0.6499438274944868,"voiceScore":0.49382250044080944,"brightScore":0.2239864662175369,"averageEnergyDb":-73.24774580455961,"ruleMatched":"bass-heavy-dark"}}],"stack":null}
+[2026-04-26T01:58:51.148Z] {"timestamp":1777168730387,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:58:55.134Z] {"timestamp":1777168733981,"level":"LOG","args":["[LastTrack] Saved last track:","track-1777168489291-xom0x1pp4"],"stack":null}
+[2026-04-26T01:58:55.134Z] {"timestamp":1777168733987,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:59:01.148Z] {"timestamp":1777168740387,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:59:03.134Z] {"timestamp":1777168741323,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:59:03.134Z] {"timestamp":1777168742475,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:59:03.134Z] {"timestamp":1777168743046,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:59:05.134Z] {"timestamp":1777168743597,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:59:05.134Z] {"timestamp":1777168744123,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:59:05.134Z] {"timestamp":1777168744651,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:59:05.134Z] {"timestamp":1777168745131,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:59:07.134Z] {"timestamp":1777168745737,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:59:07.134Z] {"timestamp":1777168746175,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:59:07.134Z] {"timestamp":1777168746710,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:59:07.134Z] {"timestamp":1777168747119,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}
+[2026-04-26T01:59:09.007Z] {"timestamp":1777168747652,"level":"LOG","args":["🎛️ AUDIO CON EFECTOS: Cadena de procesamiento activada"],"stack":null}

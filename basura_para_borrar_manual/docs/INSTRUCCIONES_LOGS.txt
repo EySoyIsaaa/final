@@ -1,0 +1,103 @@
+🔍 INSTRUCCIONES PARA OBTENER LOGS Y DIAGNOSTICAR
+
+═══════════════════════════════════════════════════════════
+
+PASO 1: COMPILAR E INSTALAR
+═══════════════════════════════════════════════════════════
+
+En tu computadora:
+
+cd C:\Users\Isaias\Desktop\Epicenter-Player-main
+gradlew assembleDebug
+
+Instalar:
+adb install android\app\build\outputs\apk\debug\app-debug.apk
+
+═══════════════════════════════════════════════════════════
+
+PASO 2: VER LOGS EN TIEMPO REAL
+═══════════════════════════════════════════════════════════
+
+Opción A - ADB Logcat (Más fácil):
+
+adb logcat | findstr "MusicScanner"
+
+Opción B - Android Studio:
+1. Conectar dispositivo USB
+2. Abrir Android Studio
+3. View → Tool Windows → Logcat
+4. En filtro escribir: "MusicScanner"
+
+═══════════════════════════════════════════════════════════
+
+PASO 3: USAR LA APP Y CAPTURAR LOGS
+═══════════════════════════════════════════════════════════
+
+1. Abrir EpicenterDSP PLAYER en tu dispositivo
+2. Tocar "Escanear Música del Dispositivo"
+3. Conceder permisos si aparece diálogo
+4. Esperar a que aparezca "No se encontraron archivos"
+
+MIENTRAS HACES ESTO, los logs mostrarán:
+
+MusicScanner: Solicitando permisos para alias: audio33
+MusicScanner: ✅ Permiso ya concedido
+MusicScanner: scanMusic() llamado!
+MusicScanner: Usando URI para Android 10+: ...
+MusicScanner: Cursor obtenido. Total de filas: X
+MusicScanner: Escaneo completado. Archivos encontrados: X
+
+O si hay error:
+MusicScanner: ❌ Permiso NO concedido
+MusicScanner: ❌ Cursor es NULL
+MusicScanner: ❌ Error en escaneo: ...
+
+═══════════════════════════════════════════════════════════
+
+PASO 4: COMPARTIR LOGS
+═══════════════════════════════════════════════════════════
+
+Copia TODO lo que aparezca con "MusicScanner" y compártelo.
+
+═══════════════════════════════════════════════════════════
+
+INFORMACIÓN ADICIONAL ÚTIL:
+═══════════════════════════════════════════════════════════
+
+1. ¿Qué versión de Android tienes? (Settings → About phone)
+   
+2. ¿Tienes música en tu dispositivo? Verifica con otra app 
+   como Google Play Music o cualquier reproductor
+
+3. ¿Has concedido permisos de audio a la app?
+   Settings → Apps → EpicenterDSP → Permissions
+   
+4. ¿La música está en almacenamiento interno o SD card?
+
+═══════════════════════════════════════════════════════════
+
+LOGS ESPERADOS SI FUNCIONA:
+═══════════════════════════════════════════════════════════
+
+MusicScanner: Solicitando permisos para alias: audio33
+MusicScanner: ✅ Permiso ya concedido
+MusicScanner: ==========================================
+MusicScanner: scanMusic() llamado!
+MusicScanner: ==========================================
+MusicScanner: ✅ Permiso concedido, iniciando escaneo...
+MusicScanner: Obteniendo ContentResolver...
+MusicScanner: Usando URI para Android 10+: content://media/external/audio/media
+MusicScanner: Ejecutando query...
+MusicScanner: ✅ Cursor obtenido. Total de filas: 150
+MusicScanner: ✅ Escaneo completado. Archivos encontrados: 150
+
+═══════════════════════════════════════════════════════════
+
+SIN ESTOS LOGS NO PUEDO SABER QUÉ FALLA EXACTAMENTE.
+
+Por favor comparte:
+1. Los logs completos de "MusicScanner"
+2. Versión de Android
+3. Si tienes música en el dispositivo (verificado con otra app)
+
+═══════════════════════════════════════════════════════════

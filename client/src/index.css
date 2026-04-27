@@ -1,0 +1,321 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* Epicenter Hi-Fi - Obsidian Theme */
+:root {
+  /* Monochrome palette */
+  --primary: #FFFFFF;
+  --primary-foreground: #000000;
+  
+  --accent: #E4E4E7;
+  --accent-foreground: #000000;
+  
+  --secondary: #27272A;
+  --secondary-foreground: #FFFFFF;
+  
+  /* Background - Pure black */
+  --background: #000000;
+  --foreground: #FFFFFF;
+  
+  /* Card - Dark grey */
+  --card: #121212;
+  --card-foreground: #FFFFFF;
+  
+  /* Popover */
+  --popover: #0A0A0A;
+  --popover-foreground: #FFFFFF;
+  
+  /* Muted */
+  --muted: #18181B;
+  --muted-foreground: #71717A;
+  
+  /* Destructive */
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+  
+  /* Border & Input */
+  --border: #27272A;
+  --input: #27272A;
+  --ring: rgba(255, 255, 255, 0.2);
+  
+  /* Chart colors - Monochrome */
+  --chart-1: #FFFFFF;
+  --chart-2: #A1A1AA;
+  --chart-3: #71717A;
+  --chart-4: #52525B;
+  --chart-5: #3F3F46;
+  
+  /* Sidebar */
+  --sidebar: #0A0A0A;
+  --sidebar-foreground: #FFFFFF;
+  --sidebar-primary: #FFFFFF;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #18181B;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #27272A;
+  --sidebar-ring: rgba(255, 255, 255, 0.2);
+  
+  --radius: 1rem;
+}
+
+.dark {
+  --primary: #FFFFFF;
+  --primary-foreground: #000000;
+  --accent: #E4E4E7;
+  --accent-foreground: #000000;
+  --secondary: #27272A;
+  --secondary-foreground: #FFFFFF;
+  --background: #000000;
+  --foreground: #FFFFFF;
+  --card: #121212;
+  --card-foreground: #FFFFFF;
+  --popover: #0A0A0A;
+  --popover-foreground: #FFFFFF;
+  --muted: #18181B;
+  --muted-foreground: #71717A;
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+  --border: #27272A;
+  --input: #27272A;
+  --ring: rgba(255, 255, 255, 0.2);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-black text-white antialiased;
+    font-family: 'Manrope', 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Selection style */
+  ::selection {
+    @apply bg-white text-black;
+  }
+  
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [type="button"]:not(:disabled),
+  [type="submit"]:not(:disabled),
+  [type="reset"]:not(:disabled),
+  a[href],
+  select:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled) {
+    @apply cursor-pointer;
+  }
+}
+
+@layer components {
+  .container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .flex {
+    min-height: 0;
+    min-width: 0;
+  }
+
+  /* Safe area for devices with notch */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Premium card effect */
+  .card-elevated {
+    @apply bg-zinc-900/60 backdrop-blur-2xl border border-white/5;
+    box-shadow: 
+      0 0 0 1px rgba(255, 255, 255, 0.03),
+      0 20px 50px -12px rgba(0, 0, 0, 0.8);
+  }
+
+  /* Subtle inner glow for active elements */
+  .glow-soft {
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+      0 0 30px rgba(255, 255, 255, 0.05);
+  }
+
+  /* Album art shadow */
+  .album-shadow {
+    box-shadow: 
+      0 25px 50px -12px rgba(0, 0, 0, 0.9),
+      0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+
+  /* Button press effect */
+  .btn-press {
+    @apply transition-all duration-150 ease-out;
+  }
+  .btn-press:active {
+    @apply scale-95;
+  }
+
+  /* Knob indicator LED */
+  .led-indicator {
+    @apply w-1.5 h-1.5 rounded-full bg-white;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+  }
+
+  @media (min-width: 640px) {
+    .container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+}
+
+/* Custom scrollbar - Minimal */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+/* Splash Screen Animations */
+.duration-400 {
+  transition-duration: 400ms;
+}
+
+@keyframes splash-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.animate-splash-pulse {
+  animation: splash-pulse 2s ease-in-out infinite;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Custom range input styling for EQ sliders */
+input[type="range"].eq-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"].eq-slider::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to top, 
+    rgba(255, 255, 255, 0.1) 0%, 
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  border-radius: 4px;
+}
+
+input[type="range"].eq-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 8px;
+  background: #FFFFFF;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  cursor: grab;
+}
+
+input[type="range"].eq-slider::-webkit-slider-thumb:active {
+  cursor: grabbing;
+}
+
+/* Progress bar styling */
+input[type="range"].progress-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  height: 4px;
+}
+
+input[type="range"].progress-slider::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+input[type="range"].progress-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #FFFFFF;
+  border-radius: 50%;
+  margin-top: -4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
