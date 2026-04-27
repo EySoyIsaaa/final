@@ -1,0 +1,171 @@
+{
+  "design_system": {
+    "identity": {
+      "name": "Epicenter Hi-Fi",
+      "aesthetic": "Apple Music Premium / Teenage Engineering Minimalist",
+      "core_values": ["Precision", "Depth", "Clarity", "Tactility"],
+      "tone": "Serious, Audiophile, Expensive"
+    },
+    "typography": {
+      "font_family": {
+        "headings": "Manrope, sans-serif",
+        "body": "Inter, sans-serif",
+        "mono": "JetBrains Mono, monospace"
+      },
+      "weights": {
+        "light": 300,
+        "regular": 400,
+        "medium": 500,
+        "bold": 700
+      },
+      "styles": {
+        "h1": "text-3xl md:text-4xl font-bold tracking-tight text-white",
+        "h2": "text-2xl font-semibold tracking-tight text-white",
+        "h3": "text-xl font-medium tracking-normal text-zinc-100",
+        "body": "text-base font-normal text-zinc-400 leading-relaxed",
+        "caption": "text-xs font-medium tracking-wider uppercase text-zinc-500",
+        "label": "text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-600"
+      }
+    },
+    "colors": {
+      "theme": "dark",
+      "palette": {
+        "background": {
+          "default": "#000000",
+          "subtle": "#09090b",
+          "card": "#121212",
+          "floating": "rgba(20, 20, 20, 0.8)"
+        },
+        "text": {
+          "primary": "#FFFFFF",
+          "secondary": "#A1A1AA",
+          "muted": "#52525B",
+          "inverted": "#000000"
+        },
+        "accent": {
+          "primary": "#FFFFFF",
+          "secondary": "#E4E4E7",
+          "highlight": "#FAFAFA",
+          "active": "#FFFFFF",
+          "signal_danger": "#EF4444",
+          "signal_success": "#10B981"
+        },
+        "border": {
+          "default": "#27272A",
+          "subtle": "#18181B",
+          "active": "#52525B"
+        }
+      },
+      "gradients": {
+        "subtle_glow": "radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0) 70%)",
+        "glass": "linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)"
+      }
+    },
+    "layout": {
+      "spacing": {
+        "container_padding": "p-6 md:p-8",
+        "section_gap": "gap-8",
+        "item_gap": "gap-4"
+      },
+      "radius": {
+        "default": "rounded-2xl",
+        "button": "rounded-full",
+        "card": "rounded-3xl"
+      },
+      "structure": {
+        "mobile_first": true,
+        "max_width": "max-w-md mx-auto",
+        "safe_area": "pt-safe-top pb-safe-bottom"
+      }
+    },
+    "components": {
+      "buttons": {
+        "primary": "bg-white text-black hover:bg-zinc-200 shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all active:scale-95",
+        "secondary": "bg-zinc-900 text-white border border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700",
+        "ghost": "text-zinc-400 hover:text-white hover:bg-white/5",
+        "icon": "p-3 rounded-full bg-zinc-900/50 backdrop-blur-md border border-white/5 text-white hover:bg-white/10 active:scale-90 transition-transform"
+      },
+      "cards": {
+        "default": "bg-zinc-900/40 backdrop-blur-xl border border-white/5 shadow-2xl",
+        "glass": "bg-black/40 backdrop-blur-2xl border-t border-white/10 shadow-xl"
+      },
+      "inputs": {
+        "default": "bg-zinc-900 border-zinc-800 focus:border-white focus:ring-0 rounded-xl text-white placeholder:text-zinc-600"
+      },
+      "knobs": {
+        "style": "minimal_metallic",
+        "size": "w-24 h-24",
+        "indicator_color": "#FFFFFF",
+        "track_color": "#27272A"
+      }
+    },
+    "motion": {
+      "transitions": {
+        "default": "transition-all duration-300 ease-out",
+        "fast": "transition-all duration-150 ease-out",
+        "bounce": "transition-all duration-500 cubic-bezier(0.175, 0.885, 0.32, 1.275)"
+      },
+      "animations": {
+        "fade_in": "animate-in fade-in duration-500",
+        "slide_up": "animate-in slide-in-from-bottom-4 duration-500",
+        "pulse_slow": "animate-pulse duration-[3000ms]"
+      }
+    }
+  },
+  "assets": {
+    "icons": {
+      "library": "lucide-react",
+      "style": "stroke-width={1.5} className='text-zinc-400'"
+    },
+    "images": {
+      "placeholders": [
+        {
+          "category": "album_art",
+          "url": "https://images.pexels.com/photos/6580556/pexels-photo-6580556.jpeg",
+          "alt": "Abstract Geometric Album Art 1"
+        },
+        {
+          "category": "album_art",
+          "url": "https://images.pexels.com/photos/20548811/pexels-photo-20548811.jpeg",
+          "alt": "Abstract Geometric Album Art 2"
+        }
+      ]
+    }
+  },
+  "implementation_guide": {
+    "framework": "React + TypeScript + Tailwind CSS",
+    "ui_library": "shadcn/ui",
+    "icons_library": "lucide-react",
+    "state_management": "React Context / Zustand (implied)",
+    "routing": "React Router / Wouter (implied)",
+    "steps": [
+      {
+        "phase": "Setup",
+        "action": "Ensure 'Manrope' font is loaded via @fontsource or Google Fonts."
+      },
+      {
+        "phase": "Global Styles",
+        "action": "Apply 'bg-black text-white antialiased selection:bg-white selection:text-black' to body."
+      },
+      {
+        "phase": "Components",
+        "action": "Customize shadcn components to remove 'radius-md' and use 'rounded-2xl' or 'rounded-full'. Remove all blue/violet focus rings and replace with 'ring-white/20'."
+      },
+      {
+        "phase": "Player View",
+        "action": "Implement a vertical stack: Header (Chevron Down), Art (Aspect Square, Shadow-2xl), Song Info (Left Aligned), Scrubber (Thin, White), Controls (Large Play Button), Volume/Options."
+      },
+      {
+        "phase": "DSP View",
+        "action": "Create a 'Rack Mount' aesthetic. Dark grey background, 5 rotary knobs in a grid or scrollable row. Use Canvas or SVG for knobs. Add 'LED' indicators (small divs with shadow)."
+      }
+    ],
+    "universal_rules": [
+      "NO GRADIENTS on buttons. Flat white or flat grey.",
+      "NO VIOLET/CYAN colors. Strictly Monochrome + Album Art colors.",
+      "Use 'backdrop-blur-3xl' for overlays.",
+      "Ensure 60fps animations for the spectrum analyzer.",
+      "All interactive elements must have 'data-testid'."
+    ]
+  }
+}
