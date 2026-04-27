@@ -4,7 +4,7 @@ final class EpicenterSettingsStore {
   private static volatile boolean enabled = false;
   private static volatile float sweepFreq = 45f;
   private static volatile float width = 50f;
-  private static volatile float intensity = 50f;
+  private static volatile float intensity = 100f;
   private static volatile float balance = 50f;
   private static volatile float volume = 100f;
 
