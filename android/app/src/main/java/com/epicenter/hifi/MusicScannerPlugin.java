@@ -244,6 +244,49 @@ public class MusicScannerPlugin extends Plugin {
     }
   }
 
+
+
+  @PluginMethod
+  public void deleteTrackById(PluginCall call) {
+    String id = call.getString("id");
+    if (id == null || id.isEmpty()) {
+      call.reject("id is required");
+      return;
+    }
+
+    try {
+      JSArray existing = loadPersistedLibrary();
+      JSArray next = new JSArray();
+      for (int i = 0; i < existing.length(); i++) {
+        JSONObject obj = existing.getJSONObject(i);
+        String trackId = obj.optString("id", "");
+        if (!id.equals(trackId)) {
+          next.put(obj);
+        }
+      }
+      persistLibrary(next);
+      JSObject result = new JSObject();
+      result.put("success", true);
+      result.put("count", next.length());
+      call.resolve(result);
+    } catch (Exception e) {
+      call.reject("Error deleting track: " + e.getMessage(), e);
+    }
+  }
+
+  @PluginMethod
+  public void clearNativeLibrary(PluginCall call) {
+    try {
+      persistLibrary(new JSArray());
+      JSObject result = new JSObject();
+      result.put("success", true);
+      result.put("count", 0);
+      call.resolve(result);
+    } catch (Exception e) {
+      call.reject("Error clearing native library: " + e.getMessage(), e);
+    }
+  }
+
   @PluginMethod
   public void getLibraryPage(PluginCall call) {
     int page = call.getInt("page", 1);
