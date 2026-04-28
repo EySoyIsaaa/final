@@ -11,6 +11,40 @@ const TRACKS_STORE = 'tracks';
 const AUDIO_STORE = 'audio-files';
 const PLAYLISTS_STORE = 'playlists';
 
+
+const isAndroidNativeLibraryAvailable = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const ua = window.navigator.userAgent.toLowerCase();
+  return /android/.test(ua) && !!(window as any).Capacitor?.Plugins?.MusicScanner;
+};
+
+const getMusicScanner = () => (window as any).Capacitor?.Plugins?.MusicScanner;
+
+const mapNativeTrack = (track: any): StoredTrackMetadata => ({
+  id: String(track.id || ''),
+  title: track.title || track.name || 'Unknown',
+  artist: track.artist || 'Unknown Artist',
+  duration: typeof track.duration === 'number' ? track.duration : 0,
+  bitDepth: typeof track.bitDepth === 'number' ? track.bitDepth : undefined,
+  sampleRate: typeof track.sampleRate === 'number' ? track.sampleRate : undefined,
+  bitrate: typeof track.bitrate === 'number' ? track.bitrate : undefined,
+  isHiRes: typeof track.isHiRes === 'boolean' ? track.isHiRes : undefined,
+  coverBase64: undefined,
+  fileName: track.name || track.title || 'Unknown',
+  fileType: track.mimeType || 'audio/mpeg',
+  fileSize: typeof track.size === 'number' ? track.size : 0,
+  addedAt: Date.now(),
+  sourceUri: track.contentUri,
+  sourceType: 'media-store',
+  albumArtUri: track.albumArtUri,
+  mediaStoreId: String(track.id || ''),
+  dateModified: typeof track.dateModified === 'number' ? track.dateModified : undefined,
+  sourceVersionKey: track.sourceVersionKey || `${track.id}:${track.size || 0}:${track.dateModified || 0}`,
+  unavailable: false,
+  lastValidatedAt: Date.now(),
+  fingerprint: `${track.id || ''}_${track.size || 0}_${track.dateModified || 0}`,
+});
+
 export interface StoredTrackMetadata {
   id: string;
   title: string;
@@ -143,6 +177,11 @@ class MusicLibraryDB {
 
   // Check if track already exists by fingerprint
   async findTrackByFingerprint(fingerprint: string): Promise<StoredTrackMetadata | null> {
+    if (isAndroidNativeLibraryAvailable()) {
+      const all = await this.getAllTrackMetadata();
+      return all.find((t) => t.fingerprint === fingerprint) || null;
+    }
+
     const db = await this.getDB();
 
     return new Promise((resolve, reject) => {
@@ -207,6 +246,10 @@ class MusicLibraryDB {
     id: string,
     metadata: Omit<StoredTrackMetadata, 'id'>
   ): Promise<void> {
+    if (isAndroidNativeLibraryAvailable()) {
+      return;
+    }
+
     const db = await this.getDB();
 
     return new Promise((resolve, reject) => {
@@ -222,6 +265,20 @@ class MusicLibraryDB {
 
   // Obtener todos los metadatos de tracks
   async getAllTrackMetadata(): Promise<StoredTrackMetadata[]> {
+    if (isAndroidNativeLibraryAvailable()) {
+      const plugin = getMusicScanner();
+      const first = await plugin.getLibraryPage({ page: 1, pageSize: 500, search: '', sortBy: 'dateModified', sortDir: 'desc' });
+      const total = Number(first?.total || 0);
+      const pageSize = 500;
+      const pages = Math.max(1, Math.ceil(total / pageSize));
+      const records = [...(first?.records || [])];
+      for (let page = 2; page <= pages; page++) {
+        const next = await plugin.getLibraryPage({ page, pageSize, search: '', sortBy: 'dateModified', sortDir: 'desc' });
+        records.push(...(next?.records || []));
+      }
+      return records.map(mapNativeTrack);
+    }
+
     const db = await this.getDB();
 
     return new Promise((resolve, reject) => {
@@ -255,6 +312,12 @@ class MusicLibraryDB {
 
   // Eliminar un track
   async deleteTrack(id: string): Promise<void> {
+    if (isAndroidNativeLibraryAvailable()) {
+      const plugin = getMusicScanner();
+      await plugin.deleteTrackById({ id });
+      return;
+    }
+
     const db = await this.getDB();
 
     return new Promise((resolve, reject) => {
@@ -270,6 +333,12 @@ class MusicLibraryDB {
 
   // Limpiar toda la biblioteca
   async clearAll(): Promise<void> {
+    if (isAndroidNativeLibraryAvailable()) {
+      const plugin = getMusicScanner();
+      await plugin.clearNativeLibrary();
+      return;
+    }
+
     const db = await this.getDB();
 
     return new Promise((resolve, reject) => {
