@@ -139,6 +139,7 @@
       const { crossoverHz, bodyHz, subTopHz } = this.getDerivedFrequencies(params.sweepFreq, params.width);
       return {
         voiceHighpass: new BiquadFilter("highpass", crossoverHz, sampleRate, 0.707),
+        voicePresenceHighpass: new BiquadFilter("highpass", Math.max(170, crossoverHz + 40), sampleRate, 0.707),
         bassLowpass: new BiquadFilter("lowpass", crossoverHz * 1.15, sampleRate, 0.707),
         lowMidBody: new BiquadFilter("bandpass", bodyHz, sampleRate, 0.85),
         lowMidDip: new BiquadFilter("bandpass", bodyHz * 1.18, sampleRate, 1.1),
@@ -205,6 +206,7 @@
       const derived = this.getDerivedFrequencies(params.sweepFreq, params.width);
       for (const state of this.channels) {
         state.voiceHighpass.updateCoeffs("highpass", derived.crossoverHz, 0.707);
+        state.voicePresenceHighpass.updateCoeffs("highpass", Math.max(170, derived.crossoverHz + 40), 0.707);
         state.bassLowpass.updateCoeffs("lowpass", derived.crossoverHz * 1.15, 0.707);
         state.lowMidBody.updateCoeffs("bandpass", derived.bodyHz, 0.85);
         state.lowMidDip.updateCoeffs("bandpass", derived.bodyHz * 1.18, 1.1);
@@ -299,14 +301,15 @@
         for (let i = 0; i < blockSize; i++) {
           const sample = this.denormalFloor(inChan[i]);
           const voicePath = state.voiceHighpass.process(sample);
-          const voicePresence = state.voiceEnv.process(voicePath);
+          const cleanVoicePath = state.voicePresenceHighpass.process(voicePath);
+          const voicePresence = state.voiceEnv.process(cleanVoicePath);
           const voiceProtection = Math.max(0.56, 1 - voicePresence * (0.9 + intensityNorm * 0.34));
           const bassProgram = state.bassLowpass.process(sample);
           const body = state.lowMidBody.process(sample);
           const dip = state.lowMidDip.process(sample);
           const shapedBassProgram = bassProgram * bassProgramAmount + body * lowMidBodyAmount * (0.45 + voiceProtection * 0.55) - dip * lowMidDipAmount;
           const generatedSub = state.subLowpass.process(subBuffer[i]) * (0.4 + voiceProtection * 0.6);
-          let mixed = voicePath + shapedBassProgram + generatedSub;
+          let mixed = cleanVoicePath + shapedBassProgram + generatedSub;
           const protectionGain = 0.94 + voiceProtection * 0.06;
           mixed *= volumeGain * protectionGain * EPICENTER_OUTPUT_TRIM;
           mixed = Math.tanh(mixed * 0.94) / Math.tanh(0.94);
