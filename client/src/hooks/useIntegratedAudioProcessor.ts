@@ -56,8 +56,8 @@ export interface CrossfadeConfig {
   duration: number; // segundos
 }
 
-export const EQ_GAIN_MIN = -8;
-export const EQ_GAIN_MAX = 8;
+export const EQ_GAIN_MIN = -3;
+export const EQ_GAIN_MAX = 3;
 
 const EQ_31_FREQUENCIES = [
   20, 25, 31.5, 40, 50, 63, 80, 100, 125, 160,

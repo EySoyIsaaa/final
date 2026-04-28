@@ -144,7 +144,7 @@
         lowMidBody: new BiquadFilter("bandpass", bodyHz, sampleRate, 0.85),
         lowMidDip: new BiquadFilter("bandpass", bodyHz * 1.18, sampleRate, 1.1),
         subLowpass: new BiquadFilter("lowpass", subTopHz, sampleRate, 0.707),
-        outputDcHighpass: new BiquadFilter("highpass", 18, sampleRate, 0.707),
+        outputDcHighpass: new BiquadFilter("highpass", 32, sampleRate, 0.707),
         voiceEnv: new EnvelopeFollower(this.coeffFromMs(6), this.coeffFromMs(110))
       };
     }
@@ -259,7 +259,7 @@
       const balanceNorm = Math.max(0, Math.min(100, balance)) / 100;
       const widthNorm = Math.max(0, Math.min(100, width)) / 100;
       const volumeGain = Math.max(0, Math.min(1, volume / 100 * EPICENTER_VOLUME_MAX_SCALE));
-      const synthAmount = 0.39 + intensityNorm * 1.12;
+      const synthAmount = (0.39 + intensityNorm * 1.12) * 1.15;
       const bassProgramAmount = 0.64 + balanceNorm * 0.32;
       const lowMidBodyAmount = 0.12 + balanceNorm * 0.08;
       const lowMidDipAmount = (0.08 + intensityNorm * 0.16) * (0.45 + widthNorm * 0.3);
@@ -291,7 +291,7 @@
         const holdFactor = monoState.holdSamples > 0 ? 1 : 0;
         const remixGate = Math.max(gateValue, holdFactor * 0.45);
         const leveledSynth = monoState.synthLevelEnv.process(synth) * Math.sign(synth);
-        const protectedSynth = Math.tanh((synth * 0.65 + leveledSynth * 0.35) * 2.1) * 0.72;
+        const protectedSynth = Math.tanh((synth * 0.65 + leveledSynth * 0.35) * 1.92) * 0.72;
         subBuffer[i] = this.denormalFloor(protectedSynth * synthAmount * remixGate);
       }
       for (let ch = 0; ch < numChannels; ch++) {
@@ -312,7 +312,7 @@
           let mixed = cleanVoicePath + shapedBassProgram + generatedSub;
           const protectionGain = 0.94 + voiceProtection * 0.06;
           mixed *= volumeGain * protectionGain * EPICENTER_OUTPUT_TRIM;
-          mixed = Math.tanh(mixed * 0.94) / Math.tanh(0.94);
+          mixed = Math.tanh(mixed * 0.9) / Math.tanh(0.9);
           mixed = state.outputDcHighpass.process(mixed);
           outChan[i] = this.denormalFloor(mixed);
         }
