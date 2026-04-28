@@ -214,7 +214,7 @@ public class NativeAudioPlayerPlugin extends Plugin {
 
       float sweepFreq = (float) (sweepFreqValue != null ? sweepFreqValue : 45.0);
       float width = (float) (widthValue != null ? widthValue : 50.0);
-      float intensity = (float) (intensityValue != null ? intensityValue : 50.0);
+      float intensity = (float) (intensityValue != null ? intensityValue : 100.0);
       float balance = (float) (balanceValue != null ? balanceValue : 50.0);
       float volume = (float) (volumeValue != null ? volumeValue : 100.0);
 

@@ -10,6 +10,9 @@ namespace {
 constexpr float DENORMAL_FLOOR = 1e-24f;
 constexpr float TWO_PI = 6.28318530717958647692f;
 constexpr float EPICENTER_INTENSITY_HEADROOM = 0.75f;
+constexpr float EPICENTER_INTENSITY_MAX_SCALE = 0.5f;
+constexpr float EPICENTER_VOLUME_MAX_SCALE = 0.75f;
+constexpr float EPICENTER_OUTPUT_TRIM = 0.95f;
 constexpr const char* LOG_TAG = "EpicenterNative";
 
 inline float denormalFloor(float v) {
@@ -123,6 +126,7 @@ struct EnvelopeFollower {
 
 struct ChannelState {
   Biquad voiceHighpass;
+  Biquad voicePresenceHighpass;
   Biquad bassLowpass;
   Biquad lowMidBody;
   Biquad lowMidDip;
@@ -220,13 +224,15 @@ class EpicenterEngine {
       return;
     }
 
-    const float intensityNorm = (intensity_ / 100.0f) * EPICENTER_INTENSITY_HEADROOM;
+    const float intensityRawNorm = intensity_ / 100.0f;
+    const float intensityScaledNorm = intensityRawNorm * EPICENTER_INTENSITY_MAX_SCALE;
+    const float intensityNorm = intensityScaledNorm * EPICENTER_INTENSITY_HEADROOM;
     const float balanceNorm = balance_ / 100.0f;
     const float widthNorm = width_ / 100.0f;
-    const float volumeGain = clampf(volume_ / 100.0f, 0.0f, 1.0f);
+    const float volumeGain = clampf((volume_ / 100.0f) * EPICENTER_VOLUME_MAX_SCALE, 0.0f, 1.0f);
 
-    const float synthAmount = 0.42f + intensityNorm * 1.28f;
-    const float bassProgramAmount = 0.68f + balanceNorm * 0.38f;
+    const float synthAmount = 0.39f + intensityNorm * 1.12f;
+    const float bassProgramAmount = 0.64f + balanceNorm * 0.32f;
     const float lowMidBodyAmount = 0.12f + balanceNorm * 0.08f;
     const float lowMidDipAmount = (0.08f + intensityNorm * 0.16f) * (0.45f + widthNorm * 0.3f);
     const int gateHoldSamples = static_cast<int>(sampleRate_ * (0.025f + intensityNorm * 0.06f));
@@ -283,8 +289,9 @@ class EpicenterEngine {
         const float sample = pcmToFloat(in[i * usedChannels + ch]);
 
         const float voicePath = state.voiceHighpass.process(sample);
-        const float voicePresence = state.voiceEnv.process(voicePath);
-        const float voiceProtection = std::max(0.5f, 1.0f - voicePresence * (0.85f + intensityNorm * 0.3f));
+        const float cleanVoicePath = state.voicePresenceHighpass.process(voicePath);
+        const float voicePresence = state.voiceEnv.process(cleanVoicePath);
+        const float voiceProtection = std::max(0.56f, 1.0f - voicePresence * (0.9f + intensityNorm * 0.34f));
 
         const float bassProgram = state.bassLowpass.process(sample);
         const float body = state.lowMidBody.process(sample);
@@ -297,10 +304,10 @@ class EpicenterEngine {
 
         const float generatedSub = state.subLowpass.process(subBuffer_[static_cast<size_t>(i)]) * (0.4f + voiceProtection * 0.6f);
 
-        float mixed = voicePath + shapedBassProgram + generatedSub;
+        float mixed = cleanVoicePath + shapedBassProgram + generatedSub;
         const float protectionGain = 0.94f + voiceProtection * 0.06f;
 
-        mixed *= volumeGain * protectionGain;
+        mixed *= volumeGain * protectionGain * EPICENTER_OUTPUT_TRIM;
         mixed = std::tanh(mixed * 0.94f) / std::tanh(0.94f);
         mixed = state.outputDcHighpass.process(mixed);
 
@@ -317,7 +324,7 @@ class EpicenterEngine {
 
   float sweepFreq_ = 45.0f;
   float width_ = 50.0f;
-  float intensity_ = 50.0f;
+  float intensity_ = 100.0f;
   float balance_ = 50.0f;
   float volume_ = 100.0f;
 
@@ -331,6 +338,7 @@ class EpicenterEngine {
   void initChannel(ChannelState& c) {
     DerivedFreq d = getDerivedFrequencies(sweepFreq_, width_);
     c.voiceHighpass.sr = sampleRate_;
+    c.voicePresenceHighpass.sr = sampleRate_;
     c.bassLowpass.sr = sampleRate_;
     c.lowMidBody.sr = sampleRate_;
     c.lowMidDip.sr = sampleRate_;
@@ -338,6 +346,7 @@ class EpicenterEngine {
     c.outputDcHighpass.sr = sampleRate_;
 
     c.voiceHighpass.update(Biquad::Type::Highpass, d.crossoverHz, 0.707f);
+    c.voicePresenceHighpass.update(Biquad::Type::Highpass, std::max(170.0f, d.crossoverHz + 40.0f), 0.707f);
     c.bassLowpass.update(Biquad::Type::Lowpass, d.crossoverHz * 1.15f, 0.707f);
     c.lowMidBody.update(Biquad::Type::Bandpass, d.bodyHz, 0.85f);
     c.lowMidDip.update(Biquad::Type::Bandpass, d.bodyHz * 1.18f, 1.1f);
@@ -387,6 +396,7 @@ class EpicenterEngine {
     DerivedFreq d = getDerivedFrequencies(sweepFreq_, width_);
     for (auto& c : channels_) {
       c.voiceHighpass.update(Biquad::Type::Highpass, d.crossoverHz, 0.707f);
+      c.voicePresenceHighpass.update(Biquad::Type::Highpass, std::max(170.0f, d.crossoverHz + 40.0f), 0.707f);
       c.bassLowpass.update(Biquad::Type::Lowpass, d.crossoverHz * 1.15f, 0.707f);
       c.lowMidBody.update(Biquad::Type::Bandpass, d.bodyHz, 0.85f);
       c.lowMidDip.update(Biquad::Type::Bandpass, d.bodyHz * 1.18f, 1.1f);
