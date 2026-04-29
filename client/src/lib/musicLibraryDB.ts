@@ -263,13 +263,48 @@ class MusicLibraryDB {
     });
   }
 
+
+  async getTrackMetadataPage(params?: {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    sortBy?: 'title' | 'artist' | 'dateModified';
+    sortDir?: 'asc' | 'desc';
+  }): Promise<{ records: StoredTrackMetadata[]; total: number; page: number; pageSize: number }> {
+    if (isAndroidNativeLibraryAvailable()) {
+      const plugin = getMusicScanner();
+      const page = params?.page ?? 1;
+      const pageSize = params?.pageSize ?? 100;
+      const result = await plugin.getLibraryPage({
+        page,
+        pageSize,
+        search: params?.search ?? '',
+        sortBy: params?.sortBy ?? 'dateModified',
+        sortDir: params?.sortDir ?? 'desc',
+      });
+      return {
+        records: (result?.records || []).map(mapNativeTrack),
+        total: Number(result?.total || 0),
+        page: Number(result?.page || page),
+        pageSize: Number(result?.pageSize || pageSize),
+      };
+    }
+
+    const all = await this.getAllTrackMetadata();
+    const page = Math.max(1, params?.page ?? 1);
+    const pageSize = Math.max(1, params?.pageSize ?? 100);
+    const fromIndex = Math.min(all.length, (page - 1) * pageSize);
+    const toIndex = Math.min(all.length, fromIndex + pageSize);
+    return { records: all.slice(fromIndex, toIndex), total: all.length, page, pageSize };
+  }
+
   // Obtener todos los metadatos de tracks
   async getAllTrackMetadata(): Promise<StoredTrackMetadata[]> {
     if (isAndroidNativeLibraryAvailable()) {
       const plugin = getMusicScanner();
-      const first = await plugin.getLibraryPage({ page: 1, pageSize: 500, search: '', sortBy: 'dateModified', sortDir: 'desc' });
+      const first = await plugin.getLibraryPage({ page: 1, pageSize: 100, search: '', sortBy: 'dateModified', sortDir: 'desc' });
       const total = Number(first?.total || 0);
-      const pageSize = 500;
+      const pageSize = 100;
       const pages = Math.max(1, Math.ceil(total / pageSize));
       const records = [...(first?.records || [])];
       for (let page = 2; page <= pages; page++) {

@@ -47,6 +47,9 @@ public class MusicScannerPlugin extends Plugin {
   private static final String LIBRARY_PREFS = "epicenter_library";
   private static final String LIBRARY_KEY = "tracks_v1";
 
+  private volatile String cachedLibraryRaw = null;
+  private volatile JSArray cachedLibrary = null;
+
   private static class AudioFormatInfo {
     Integer bitDepth;
     Integer sampleRate;
@@ -339,7 +342,7 @@ public class MusicScannerPlugin extends Plugin {
       }
 
       int safePage = Math.max(1, page);
-      int safePageSize = Math.max(1, Math.min(500, pageSize));
+      int safePageSize = Math.max(1, Math.min(100, pageSize));
       int fromIndex = Math.min(filtered.size(), (safePage - 1) * safePageSize);
       int toIndex = Math.min(filtered.size(), fromIndex + safePageSize);
 
@@ -750,15 +753,24 @@ public class MusicScannerPlugin extends Plugin {
     getContext()
       .getSharedPreferences(LIBRARY_PREFS, android.content.Context.MODE_PRIVATE)
       .edit()
-      .putString(LIBRARY_KEY, tracks.toString())
+            .putString(LIBRARY_KEY, tracks.toString())
       .apply();
+
+    cachedLibraryRaw = tracks.toString();
+    cachedLibrary = new JSArray(cachedLibraryRaw);
   }
 
   private JSArray loadPersistedLibrary() throws Exception {
     String raw = getContext()
       .getSharedPreferences(LIBRARY_PREFS, android.content.Context.MODE_PRIVATE)
       .getString(LIBRARY_KEY, "[]");
-    return new JSArray(raw != null ? raw : "[]");
+    String safeRaw = raw != null ? raw : "[]";
+    if (cachedLibrary != null && safeRaw.equals(cachedLibraryRaw)) {
+      return cachedLibrary;
+    }
+    cachedLibraryRaw = safeRaw;
+    cachedLibrary = new JSArray(safeRaw);
+    return cachedLibrary;
   }
 
   private JSObject findPersistedTrackById(String id) throws Exception {
