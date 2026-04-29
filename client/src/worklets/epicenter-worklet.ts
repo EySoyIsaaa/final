@@ -27,6 +27,9 @@ declare var registerProcessor: (name: string, processorCtor: any) => void;
 const DENORMAL_FLOOR = 1e-24;
 const TWO_PI = Math.PI * 2;
 const EPICENTER_INTENSITY_HEADROOM = 0.75;
+const EPICENTER_INTENSITY_MAX_SCALE = 0.5;
+const EPICENTER_VOLUME_MAX_SCALE = 0.75;
+const EPICENTER_OUTPUT_TRIM = 0.95;
 
 type FilterType = 'lowpass' | 'highpass' | 'bandpass';
 
@@ -210,6 +213,7 @@ class EnvelopeFollower {
 
 interface StereoChannelState {
   voiceHighpass: BiquadFilter;
+  voicePresenceHighpass: BiquadFilter;
   bassLowpass: BiquadFilter;
   lowMidBody: BiquadFilter;
   lowMidDip: BiquadFilter;
@@ -271,12 +275,13 @@ class EpicenterProcessor extends AudioWorkletProcessor {
 
     return {
       voiceHighpass: new BiquadFilter('highpass', crossoverHz, sampleRate, 0.707),
+      voicePresenceHighpass: new BiquadFilter('highpass', Math.max(170, crossoverHz + 40), sampleRate, 0.707),
       bassLowpass: new BiquadFilter('lowpass', crossoverHz * 1.15, sampleRate, 0.707),
       lowMidBody: new BiquadFilter('bandpass', bodyHz, sampleRate, 0.85),
       lowMidDip: new BiquadFilter('bandpass', bodyHz * 1.18, sampleRate, 1.1),
       subLowpass: new BiquadFilter('lowpass', subTopHz, sampleRate, 0.707),
       bassBoostShelf: new LowShelfFilter(sampleRate),
-      outputDcHighpass: new BiquadFilter('highpass', 18, sampleRate, 0.707),
+      outputDcHighpass: new BiquadFilter('highpass', 32, sampleRate, 0.707),
       voiceEnv: new EnvelopeFollower(this.coeffFromMs(6), this.coeffFromMs(110)),
     };
   }
@@ -348,6 +353,7 @@ class EpicenterProcessor extends AudioWorkletProcessor {
 
     for (const state of this.channels) {
       state.voiceHighpass.updateCoeffs('highpass', derived.crossoverHz, 0.707);
+      state.voicePresenceHighpass.updateCoeffs('highpass', Math.max(170, derived.crossoverHz + 40), 0.707);
       state.bassLowpass.updateCoeffs('lowpass', derived.crossoverHz * 1.15, 0.707);
       state.lowMidBody.updateCoeffs('bandpass', derived.bodyHz, 0.85);
       state.lowMidDip.updateCoeffs('bandpass', derived.bodyHz * 1.18, 1.1);
@@ -406,15 +412,16 @@ class EpicenterProcessor extends AudioWorkletProcessor {
 
     // 100% visible en la perilla equivale al antiguo 75% efectivo para evitar distorsión de voz.
     const intensityRawNorm = Math.max(0, Math.min(100, intensity)) / 100;
-    const intensityNorm = intensityRawNorm * EPICENTER_INTENSITY_HEADROOM;
+    const intensityScaledNorm = intensityRawNorm * EPICENTER_INTENSITY_MAX_SCALE;
+    const intensityNorm = intensityScaledNorm * EPICENTER_INTENSITY_HEADROOM;
     const balanceNorm = Math.max(0, Math.min(100, balance)) / 100;
     const widthNorm = Math.max(0, Math.min(100, width)) / 100;
-    const volumeGain = Math.max(0, Math.min(1.0, volume / 100));
+    const volumeGain = Math.max(0, Math.min(1.0, (volume / 100) * EPICENTER_VOLUME_MAX_SCALE));
     const bassBoostFreqHz = 48 + widthNorm * 8;
-    const bassBoostGainDb = intensityRawNorm * 9;
+    const bassBoostGainDb = intensityScaledNorm * 7.4;
 
-    const synthAmount = 0.46 + intensityNorm * 1.34;
-    const bassProgramAmount = 0.62 + balanceNorm * 0.3;
+    const synthAmount = (0.42 + intensityNorm * 1.2) * 1.15;
+    const bassProgramAmount = 0.58 + balanceNorm * 0.26;
     const lowMidBodyAmount = 0.12 + balanceNorm * 0.08;
     const lowMidDipAmount = (0.08 + intensityNorm * 0.16) * (0.45 + widthNorm * 0.3);
     const gateHoldSamples = Math.floor(sampleRate * (0.025 + intensityNorm * 0.06));
@@ -458,7 +465,7 @@ class EpicenterProcessor extends AudioWorkletProcessor {
       const holdFactor = monoState.holdSamples > 0 ? 1 : 0;
       const remixGate = Math.max(gateValue, holdFactor * 0.45);
       const leveledSynth = monoState.synthLevelEnv.process(synth) * Math.sign(synth);
-      const protectedSynth = Math.tanh((synth * 0.65 + leveledSynth * 0.35) * 2.1) * 0.72;
+      const protectedSynth = Math.tanh((synth * 0.65 + leveledSynth * 0.35) * 1.92) * 0.72;
 
       subBuffer[i] = this.denormalFloor(protectedSynth * synthAmount * remixGate);
     }
@@ -474,8 +481,9 @@ class EpicenterProcessor extends AudioWorkletProcessor {
 
         // Ruta limpia de voz / medios / agudos.
         const voicePath = state.voiceHighpass.process(sample);
-        const voicePresence = state.voiceEnv.process(voicePath);
-        const voiceProtection = Math.max(0.5, 1 - voicePresence * (0.85 + intensityNorm * 0.3));
+        const cleanVoicePath = state.voicePresenceHighpass.process(voicePath);
+        const voicePresence = state.voiceEnv.process(cleanVoicePath);
+        const voiceProtection = Math.max(0.56, 1 - voicePresence * (0.9 + intensityNorm * 0.34));
 
         // Ruta de bajo independiente, como la salida dedicada que iría al amp de bajos.
         const bassProgram = state.bassLowpass.process(sample);
@@ -490,17 +498,17 @@ class EpicenterProcessor extends AudioWorkletProcessor {
         const generatedSub = state.subLowpass.process(subBuffer[i]) * (0.48 + voiceProtection * 0.62);
 
         let mixed =
-          voicePath +
+          cleanVoicePath +
           shapedBassProgram +
           generatedSub;
 
         mixed = state.bassBoostShelf.process(mixed);
 
         const protectionGain = 0.94 + voiceProtection * 0.06;
-        mixed *= volumeGain * protectionGain;
+        mixed *= volumeGain * protectionGain * EPICENTER_OUTPUT_TRIM;
 
         // Soft clip final más relajado para no raspar la voz.
-        mixed = Math.tanh(mixed * 0.94) / Math.tanh(0.94);
+        mixed = Math.tanh(mixed * 0.9) / Math.tanh(0.9);
         mixed = state.outputDcHighpass.process(mixed);
 
         outChan[i] = this.denormalFloor(mixed);

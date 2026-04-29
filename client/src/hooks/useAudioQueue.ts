@@ -116,12 +116,23 @@ export function useAudioQueue(): QueueController {
         setIsLoading(true);
         logger.debug('[Library] Loading from IndexedDB...');
         
-        const storedTracks = await musicLibraryDB.getAllTrackMetadata();
-        logger.debug(`[Library] Found ${storedTracks.length} tracks`);
-        
         const tracks: Track[] = [];
-        
-        for (const metadata of storedTracks) {
+        const isAndroid = /android/i.test(navigator.userAgent || '');
+
+        if (isAndroid) {
+          let page = 1;
+          let total = 0;
+          do {
+            const batch = await musicLibraryDB.getTrackMetadataPage({
+              page,
+              pageSize: 100,
+              search: '',
+              sortBy: 'dateModified',
+              sortDir: 'desc',
+            });
+            total = batch.total;
+            logger.debug(`[Library] Native page ${page}: ${batch.records.length}/${total}`);
+            for (const metadata of batch.records) {
           try {
             const file = undefined;
 
@@ -156,6 +167,48 @@ export function useAudioQueue(): QueueController {
             });
           } catch (error) {
             logger.error(`[Library] Error loading track ${metadata.id}:`, error);
+          }
+        }
+            page += 1;
+          } while ((page - 1) * 100 < total);
+        } else {
+          const storedTracks = await musicLibraryDB.getAllTrackMetadata();
+          logger.debug(`[Library] Found ${storedTracks.length} tracks`);
+          for (const metadata of storedTracks) {
+            try {
+              const file = undefined;
+
+              let coverUrl: string | undefined;
+              if (metadata.coverBase64) {
+                coverUrl = metadata.coverBase64;
+                coverUrlsRef.current.set(metadata.id, coverUrl);
+              }
+
+              tracks.push({
+                id: metadata.id,
+                file,
+                fileName: metadata.fileName,
+                fileType: metadata.fileType,
+                title: metadata.title,
+                artist: metadata.artist,
+                duration: metadata.duration,
+                coverUrl,
+                bitDepth: metadata.bitDepth,
+                sampleRate: metadata.sampleRate,
+                bitrate: metadata.bitrate,
+                isHiRes: metadata.isHiRes,
+                sourceUri: metadata.sourceUri,
+                sourceType: metadata.sourceType,
+                albumArtUri: metadata.albumArtUri,
+                mediaStoreId: metadata.mediaStoreId,
+                dateModified: metadata.dateModified,
+                sourceVersionKey: metadata.sourceVersionKey,
+                unavailable: metadata.unavailable,
+                lastValidatedAt: metadata.lastValidatedAt,
+              });
+            } catch (error) {
+              logger.error(`[Library] Error loading track ${metadata.id}:`, error);
+            }
           }
         }
 
