@@ -102,25 +102,24 @@ export function useAndroidMusicLibrary() {
       
       // Escaneo + persistencia nativa (la biblioteca queda fuera del WebView)
       await MusicScanner.importAutomaticLibrary();
-      const result = await MusicScanner.getLibraryPage({
+      const first = await MusicScanner.getLibraryPage({
         page: 1,
-        pageSize: 250,
+        pageSize: 100,
         search: '',
         sortBy: 'title',
         sortDir: 'asc',
       });
+      const total = Number(first?.total || 0);
+      const pages = Math.max(1, Math.ceil(total / 100));
+      const records: any[] = [...(first?.records || [])];
+      for (let page = 2; page <= pages; page++) {
+        const next = await MusicScanner.getLibraryPage({ page, pageSize: 100, search: '', sortBy: 'title', sortDir: 'asc' });
+        records.push(...(next?.records || []));
+      }
       
-      logger.debug('🎵 Resultado del escaneo:', result);
+      logger.debug('🎵 Resultado del escaneo total:', { total, records: records.length });
       
-      const excludedExtensions = ['.ogg', '.opus'];
-      const files: AndroidMusicFile[] = (result.records || [])
-        .filter((file: any) => {
-          const name = String(file.name || '').toLowerCase();
-          const mimeType = String(file.mimeType || '').toLowerCase();
-          const hasExcludedExtension = excludedExtensions.some((ext) => name.endsWith(ext));
-          const hasExcludedMime = mimeType.includes('ogg') || mimeType.includes('opus');
-          return !hasExcludedExtension && !hasExcludedMime;
-        })
+      const files: AndroidMusicFile[] = records
         .map((file: any) => ({
           id: file.id || String(Date.now() + Math.random()),
           name: file.name || 'Unknown',
