@@ -215,32 +215,36 @@ public class MusicScannerPlugin extends Plugin {
       migrateSharedPrefsToRoomIfNeeded();
       long now = System.currentTimeMillis() / 1000L;
       android.util.Log.i("MusicScanner", "scanStarted");
-      List<TrackEntity> existing = dao().getAll();
-      int existingCount = existing.size();
       JSArray scanned = scanMusicFromMediaStore();
       int scannedCount = scanned.length();
       android.util.Log.i("MusicScanner", "scanFinished scannedCount=" + scannedCount);
+
+      List<TrackEntity> existing = dao().getAll();
+      int existingCount = existing.size();
       android.content.SharedPreferences prefs = getContext().getSharedPreferences(LIBRARY_PREFS, android.content.Context.MODE_PRIVATE);
-      int lastFullScanCount = prefs.getInt(LAST_FULL_SCAN_COUNT_KEY, 0);
-      String completenessReason = "ok";
+      int lastFullScanCount = prefs.getInt(LAST_FULL_SCAN_COUNT_KEY, -1);
       String scanCompleteness = "complete";
-      if (existingCount == 0) {
+      String completenessReason = "ok";
+      if (existingCount > 0) {
+        if (scannedCount == 0) {
+          scanCompleteness = "partial";
+          completenessReason = "empty_scan";
+        } else if (scannedCount < Math.ceil(existingCount * 0.5d)) {
+          scanCompleteness = "partial";
+          completenessReason = "low_vs_existing";
+        }
+      } else {
         scanCompleteness = "complete";
         completenessReason = "first_scan";
-      } else if (existingCount > 0 && scannedCount == 0) {
-        scanCompleteness = "partial";
-        completenessReason = "empty_scan";
-      } else if (existingCount > 0 && scannedCount < Math.ceil(existingCount * 0.5d)) {
-        scanCompleteness = "partial";
-        completenessReason = "low_vs_existing";
-      } else if (lastFullScanCount > 0 && scannedCount < Math.ceil(lastFullScanCount * 0.5d)) {
+      }
+      if ("complete".equals(scanCompleteness) && lastFullScanCount > 0 && scannedCount < Math.ceil(lastFullScanCount * 0.5d)) {
         scanCompleteness = "partial";
         completenessReason = "low_vs_baseline";
-      } else if (scannedCount < 0) {
-        scanCompleteness = "partial";
-        completenessReason = "inconsistent_result";
       }
-      android.util.Log.i("MusicScanner", "scanCompletenessDecision scannedCount=" + scannedCount + " existingCount=" + existingCount + " lastFullScanCount=" + lastFullScanCount + " scanCompleteness=" + scanCompleteness + " reason=" + completenessReason);
+      if (scannedCount < 0) {
+        scanCompleteness = "partial";
+        completenessReason = "inconsistent_scan";
+      }
       Map<String, TrackEntity> byStable = new HashMap<>();
       for (TrackEntity e : existing) byStable.put(e.stableId, e);
 
@@ -306,12 +310,12 @@ public class MusicScannerPlugin extends Plugin {
           }
         }
       });
-
-      int count = dao().countAll();
       if ("complete".equals(scanCompleteness)) {
         prefs.edit().putInt(LAST_FULL_SCAN_COUNT_KEY, scannedCount).apply();
       }
-      android.util.Log.i("MusicScanner", "scanStats added=" + added.get() + " updated=" + updated.get() + " preserved=" + preserved.get() + " missingCandidates=" + missingCandidates.get() + " unavailableMarked=" + unavailableMarked.get() + " scanCompleteness=" + scanCompleteness);
+
+      int count = dao().countAll();
+      android.util.Log.i("MusicScanner", "scanStats scannedCount=" + scannedCount + " existingCount=" + existingCount + " lastFullScanCount=" + lastFullScanCount + " added=" + added.get() + " updated=" + updated.get() + " preserved=" + preserved.get() + " missingCandidates=" + missingCandidates.get() + " unavailableMarked=" + unavailableMarked.get() + " scanCompleteness=" + scanCompleteness + " reason=" + completenessReason);
       JSObject result = new JSObject();
       result.put("count", count);
       result.put("added", added.get());
@@ -324,8 +328,19 @@ public class MusicScannerPlugin extends Plugin {
       result.put("success", true);
       call.resolve(result);
     } catch (Exception e) {
-      android.util.Log.e("MusicScanner", "scanCompletenessDecision scannedCount=-1 existingCount=-1 lastFullScanCount=-1 scanCompleteness=partial reason=exception:" + e.getClass().getSimpleName());
-      call.reject("Error importing automatic library: " + e.getMessage(), e);
+      android.util.Log.e("MusicScanner", "scanFailed reason=exception, forcing partial", e);
+      JSObject result = new JSObject();
+      result.put("count", dao().countAll());
+      result.put("added", 0);
+      result.put("updated", 0);
+      result.put("preserved", 0);
+      result.put("missingCandidates", 0);
+      result.put("unavailableMarked", 0);
+      result.put("scanCompleteness", "partial");
+      result.put("scanCompletenessReason", "exception");
+      result.put("success", false);
+      result.put("error", e.getMessage());
+      call.resolve(result);
     }
   }
 
@@ -665,14 +680,14 @@ public class MusicScannerPlugin extends Plugin {
     try {
       File cacheDir = getAudioCacheDir();
       android.content.SharedPreferences prefs = getContext().getSharedPreferences(LIBRARY_PREFS, android.content.Context.MODE_PRIVATE);
-      String activePath = prefs.getString("active_cached_file_path", "");
-      String nextPath = prefs.getString("next_cached_file_path", "");
-      Set<String> protectedPaths = new HashSet<>();
-      if (activePath != null && !activePath.isEmpty()) protectedPaths.add(activePath);
-      if (nextPath != null && !nextPath.isEmpty()) protectedPaths.add(nextPath);
+      String activeProtectedPath = prefs.getString("active_cached_file_path", "");
+      String queuedProtectedPath = prefs.getString("next_cached_file_path", "");
+      Set<String> protectedCachePaths = new HashSet<>();
+      if (activeProtectedPath != null && !activeProtectedPath.isEmpty()) protectedCachePaths.add(activeProtectedPath);
+      if (queuedProtectedPath != null && !queuedProtectedPath.isEmpty()) protectedCachePaths.add(queuedProtectedPath);
       for (TrackEntity e : dao().getAll()) {
-        if (e.cachedFilePath != null && !e.cachedFilePath.isEmpty()) protectedPaths.add(e.cachedFilePath);
-        if (e.localUri != null && e.localUri.startsWith("/")) protectedPaths.add(e.localUri);
+        if (e.cachedFilePath != null && !e.cachedFilePath.isEmpty()) protectedCachePaths.add(e.cachedFilePath);
+        if (e.localUri != null && e.localUri.startsWith("/")) protectedCachePaths.add(e.localUri);
       }
       if (cacheDir.exists()) {
         Set<String> protectedPaths = new HashSet<>();
@@ -687,7 +702,7 @@ public class MusicScannerPlugin extends Plugin {
         File[] files = cacheDir.listFiles();
         if (files != null) {
           for (File file : files) {
-            if (!protectedPaths.contains(file.getAbsolutePath())) file.delete();
+            if (!protectedCachePaths.contains(file.getAbsolutePath())) file.delete();
           }
         }
       }
