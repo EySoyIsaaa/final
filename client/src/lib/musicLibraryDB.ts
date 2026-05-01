@@ -41,6 +41,11 @@ const mapNativeTrack = (track: any): StoredTrackMetadata => ({
   dateModified: typeof track.dateModified === 'number' ? track.dateModified : undefined,
   sourceVersionKey: track.sourceVersionKey || `${track.id}:${track.size || 0}:${track.dateModified || 0}`,
   unavailable: false,
+  unavailableReason: '',
+  lastSeenAt: Date.now(),
+  missingSince: 0,
+  missingCount: 0,
+  scanCompleteness: 'complete',
   lastValidatedAt: Date.now(),
   fingerprint: `${track.id || ''}_${track.size || 0}_${track.dateModified || 0}`,
 });
@@ -66,6 +71,11 @@ export interface StoredTrackMetadata {
   dateModified?: number;
   sourceVersionKey?: string;
   unavailable?: boolean;
+  unavailableReason?: string;
+  lastSeenAt?: number;
+  missingSince?: number;
+  missingCount?: number;
+  scanCompleteness?: 'partial' | 'complete';
   lastValidatedAt?: number;
   // For duplicate detection
   fingerprint?: string; // fileName + fileSize combination
