@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
 import android.util.Base64;
+import androidx.core.content.ContextCompat;
 
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
@@ -133,9 +134,9 @@ public class MusicScannerPlugin extends Plugin {
     
     int androidState;
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        androidState = getContext().checkSelfPermission(Manifest.permission.READ_MEDIA_AUDIO);
+        androidState = ContextCompat.checkSelfPermission(getContext(), Manifest.permission.READ_MEDIA_AUDIO);
     } else {
-        androidState = getContext().checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE);
+        androidState = ContextCompat.checkSelfPermission(getContext(), Manifest.permission.READ_EXTERNAL_STORAGE);
     }
     boolean androidGranted = androidState == android.content.pm.PackageManager.PERMISSION_GRANTED;
     
