@@ -56,8 +56,8 @@ export interface CrossfadeConfig {
   duration: number; // segundos
 }
 
-export const EQ_GAIN_MIN = -8;
-export const EQ_GAIN_MAX = 8;
+export const EQ_GAIN_MIN = -3;
+export const EQ_GAIN_MAX = 3;
 
 const EQ_31_FREQUENCIES = [
   20, 25, 31.5, 40, 50, 63, 80, 100, 125, 160,
@@ -111,7 +111,11 @@ export function useIntegratedAudioProcessor(): IntegratedAudioController {
   const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
   const analyserNodeRef = useRef<AnalyserNode | null>(null);
   const eqFiltersRef = useRef<BiquadFilterNode[]>([]);
+  const eqLowFiltersRef = useRef<BiquadFilterNode[]>([]);
+  const eqHighFiltersRef = useRef<BiquadFilterNode[]>([]);
   const eqInputGainRef = useRef<GainNode | null>(null);
+  const eqLowSplitRef = useRef<BiquadFilterNode | null>(null);
+  const eqHighSplitRef = useRef<BiquadFilterNode | null>(null);
   const eqOutputGainRef = useRef<GainNode | null>(null);
   const masterGainRef = useRef<GainNode | null>(null);
   const bypassConnectionRef = useRef<boolean>(false);
@@ -211,30 +215,57 @@ export function useIntegratedAudioProcessor(): IntegratedAudioController {
       }
     }
 
-    // Inicializar Ecualizador
+        // Inicializar Ecualizador con split de bandas:
+    // - <=100 Hz solo afectan ruta de bajos
+    // - >100 Hz solo afectan ruta de medios/agudos
     if (eqFiltersRef.current.length === 0) {
       eqInputGainRef.current = ctx.createGain();
       eqOutputGainRef.current = ctx.createGain();
+      eqLowSplitRef.current = ctx.createBiquadFilter();
+      eqLowSplitRef.current.type = 'lowpass';
+      eqLowSplitRef.current.frequency.value = 120;
+      eqLowSplitRef.current.Q.value = 0.707;
 
+      eqHighSplitRef.current = ctx.createBiquadFilter();
+      eqHighSplitRef.current.type = 'highpass';
+      eqHighSplitRef.current.frequency.value = 120;
+      eqHighSplitRef.current.Q.value = 0.707;
+
+      eqLowFiltersRef.current = [];
+      eqHighFiltersRef.current = [];
       eqFiltersRef.current = eqBandsRef.current.map((band, index) => {
         const filter = ctx.createBiquadFilter();
         filter.type = index === 0 ? 'lowshelf' : index === DEFAULT_EQ_BANDS.length - 1 ? 'highshelf' : 'peaking';
         filter.frequency.value = band.frequency;
         filter.Q.value = 1.0;
         filter.gain.value = band.gain;
+        if (band.frequency <= 100) {
+          eqLowFiltersRef.current.push(filter);
+        } else {
+          eqHighFiltersRef.current.push(filter);
+        }
         return filter;
       });
 
-      // Conectar cadena de ecualizador
-      let currentNode: AudioNode = eqInputGainRef.current;
-      for (const filter of eqFiltersRef.current) {
-        currentNode.connect(filter);
-        currentNode = filter;
+      let lowNode: AudioNode = eqLowSplitRef.current;
+      for (const filter of eqLowFiltersRef.current) {
+        lowNode.connect(filter);
+        lowNode = filter;
       }
-      currentNode.connect(eqOutputGainRef.current);
+
+      let highNode: AudioNode = eqHighSplitRef.current;
+      for (const filter of eqHighFiltersRef.current) {
+        highNode.connect(filter);
+        highNode = filter;
+      }
+
+      eqInputGainRef.current.connect(eqLowSplitRef.current);
+      eqInputGainRef.current.connect(eqHighSplitRef.current);
+      lowNode.connect(eqOutputGainRef.current);
+      highNode.connect(eqOutputGainRef.current);
     }
 
-    // Conectar la parte fija de la cadena (ya no conectamos el source aquí)
+// Conectar la parte fija de la cadena (ya no conectamos el source aquí)
     // Cadena base: Worklet → Equalizer → MasterGain → Destination
     if (workletNodeRef.current && eqInputGainRef.current && eqOutputGainRef.current && masterGainRef.current) {
       workletNodeRef.current.connect(eqInputGainRef.current);
