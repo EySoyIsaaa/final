@@ -358,7 +358,12 @@ public class MusicScannerPlugin extends Plugin {
       AtomicInteger changed = new AtomicInteger(0);
       AppDatabase.get(getContext()).runInTransaction(() -> {
         for (int i = 0; i < items.length(); i++) {
-          JSONObject obj = items.getJSONObject(i);
+          JSONObject obj;
+          try {
+            obj = items.getJSONObject(i);
+          } catch (Exception parseErr) {
+            continue;
+          }
           String contentUri = obj.optString("contentUri", "");
           if (contentUri == null || contentUri.isEmpty()) continue;
           JSObject track = buildTrackFromUri(Uri.parse(contentUri));
