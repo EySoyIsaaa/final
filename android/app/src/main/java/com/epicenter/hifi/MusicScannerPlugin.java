@@ -245,6 +245,7 @@ public class MusicScannerPlugin extends Plugin {
         scanCompleteness = "partial";
         completenessReason = "inconsistent_scan";
       }
+      final String finalScanCompleteness = scanCompleteness;
       Map<String, TrackEntity> byStable = new HashMap<>();
       for (TrackEntity e : existing) byStable.put(e.stableId, e);
 
@@ -288,12 +289,12 @@ public class MusicScannerPlugin extends Plugin {
           incoming.missingSince = null;
           incoming.unavailable = false;
           incoming.unavailableReason = null;
-          incoming.scanCompleteness = scanCompleteness;
+          incoming.scanCompleteness = finalScanCompleteness;
           dao().upsert(incoming);
           seen.add(incoming.stableId);
         }
 
-        if ("complete".equals(scanCompleteness)) {
+        if ("complete".equals(finalScanCompleteness)) {
           for (TrackEntity e : existing) {
             if (seen.contains(e.stableId)) continue;
             if ("manual-uri".equals(e.sourceType)) continue;
