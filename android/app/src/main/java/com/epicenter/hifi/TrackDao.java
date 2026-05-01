@@ -39,9 +39,6 @@ public interface TrackDao {
   @Query("SELECT * FROM tracks WHERE stableId = :id OR mediaStoreId = :id OR sourceUri = :id LIMIT 1")
   TrackEntity findByAnyId(String id);
 
-  @Query("SELECT * FROM tracks WHERE duration = :duration AND size = :size AND title = :title AND artist = :artist AND dateModified = :dateModified LIMIT 1")
-  TrackEntity findStrongMatch(long duration, long size, String title, String artist, long dateModified);
-
   @Query("SELECT * FROM tracks WHERE sourceUri = :sourceUri LIMIT 1")
   TrackEntity findBySourceUri(String sourceUri);
 
