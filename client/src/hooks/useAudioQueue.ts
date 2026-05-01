@@ -39,6 +39,11 @@ export interface Track {
   dateModified?: number;
   sourceVersionKey?: string;
   unavailable?: boolean;
+  unavailableReason?: string;
+  lastSeenAt?: number;
+  missingSince?: number;
+  missingCount?: number;
+  scanCompleteness?: 'partial' | 'complete';
   lastValidatedAt?: number;
 }
 
@@ -116,12 +121,23 @@ export function useAudioQueue(): QueueController {
         setIsLoading(true);
         logger.debug('[Library] Loading from IndexedDB...');
         
-        const storedTracks = await musicLibraryDB.getAllTrackMetadata();
-        logger.debug(`[Library] Found ${storedTracks.length} tracks`);
-        
         const tracks: Track[] = [];
-        
-        for (const metadata of storedTracks) {
+        const isAndroid = /android/i.test(navigator.userAgent || '');
+
+        if (isAndroid) {
+          let page = 1;
+          let total = 0;
+          do {
+            const batch = await musicLibraryDB.getTrackMetadataPage({
+              page,
+              pageSize: 100,
+              search: '',
+              sortBy: 'dateModified',
+              sortDir: 'desc',
+            });
+            total = batch.total;
+            logger.debug(`[Library] Native page ${page}: ${batch.records.length}/${total}`);
+            for (const metadata of batch.records) {
           try {
             const file = undefined;
 
@@ -152,10 +168,57 @@ export function useAudioQueue(): QueueController {
               dateModified: metadata.dateModified,
               sourceVersionKey: metadata.sourceVersionKey,
               unavailable: metadata.unavailable,
+              unavailableReason: (metadata as any).unavailableReason,
+              lastSeenAt: (metadata as any).lastSeenAt,
+              missingSince: (metadata as any).missingSince,
+              missingCount: (metadata as any).missingCount,
+              scanCompleteness: (metadata as any).scanCompleteness,
               lastValidatedAt: metadata.lastValidatedAt,
             });
           } catch (error) {
             logger.error(`[Library] Error loading track ${metadata.id}:`, error);
+          }
+        }
+            page += 1;
+          } while ((page - 1) * 100 < total);
+        } else {
+          const storedTracks = await musicLibraryDB.getAllTrackMetadata();
+          logger.debug(`[Library] Found ${storedTracks.length} tracks`);
+          for (const metadata of storedTracks) {
+            try {
+              const file = undefined;
+
+              let coverUrl: string | undefined;
+              if (metadata.coverBase64) {
+                coverUrl = metadata.coverBase64;
+                coverUrlsRef.current.set(metadata.id, coverUrl);
+              }
+
+              tracks.push({
+                id: metadata.id,
+                file,
+                fileName: metadata.fileName,
+                fileType: metadata.fileType,
+                title: metadata.title,
+                artist: metadata.artist,
+                duration: metadata.duration,
+                coverUrl,
+                bitDepth: metadata.bitDepth,
+                sampleRate: metadata.sampleRate,
+                bitrate: metadata.bitrate,
+                isHiRes: metadata.isHiRes,
+                sourceUri: metadata.sourceUri,
+                sourceType: metadata.sourceType,
+                albumArtUri: metadata.albumArtUri,
+                mediaStoreId: metadata.mediaStoreId,
+                dateModified: metadata.dateModified,
+                sourceVersionKey: metadata.sourceVersionKey,
+                unavailable: metadata.unavailable,
+                lastValidatedAt: metadata.lastValidatedAt,
+              });
+            } catch (error) {
+              logger.error(`[Library] Error loading track ${metadata.id}:`, error);
+            }
           }
         }
 
@@ -568,12 +631,16 @@ export function useAudioQueue(): QueueController {
 
           if (!match) {
             missing += 1;
-            if (track.unavailable) {
-              return track;
-            }
+            const nextMissingCount = (track.missingCount || 0) + 1;
+            const firstMissingSince = track.missingSince || Date.now();
+            const shouldMarkUnavailable = nextMissingCount >= 3 && (Date.now() - firstMissingSince) > (24 * 60 * 60 * 1000);
             const unavailableTrack = {
               ...track,
-              unavailable: true,
+              missingCount: nextMissingCount,
+              missingSince: firstMissingSince,
+              unavailable: shouldMarkUnavailable ? true : (track.unavailable || false),
+              unavailableReason: shouldMarkUnavailable ? 'missing_from_repeated_scans' : (track.unavailableReason || ''),
+              scanCompleteness: 'complete' as const,
               lastValidatedAt: Date.now(),
             };
 
@@ -635,6 +702,11 @@ export function useAudioQueue(): QueueController {
             dateModified: match.dateModified,
             sourceVersionKey,
             unavailable: false,
+            unavailableReason: '',
+            missingCount: 0,
+            missingSince: 0,
+            lastSeenAt: Date.now(),
+            scanCompleteness: 'complete' as const,
             lastValidatedAt: Date.now(),
             bitDepth: typeof match.bitDepth === 'number' ? match.bitDepth : track.bitDepth,
             sampleRate: typeof match.sampleRate === 'number' ? match.sampleRate : track.sampleRate,
