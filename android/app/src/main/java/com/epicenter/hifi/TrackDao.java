@@ -27,11 +27,26 @@ public interface TrackDao {
   @Query("SELECT COUNT(*) FROM tracks")
   int countAll();
 
+  @Query("SELECT COUNT(*) FROM tracks WHERE (:query = '' OR title LIKE '%' || :query || '%' OR artist LIKE '%' || :query || '%' OR album LIKE '%' || :query || '%')")
+  int countFiltered(String query);
+
   @Query("SELECT * FROM tracks WHERE (:query = '' OR title LIKE '%' || :query || '%' OR artist LIKE '%' || :query || '%' OR album LIKE '%' || :query || '%') ORDER BY CASE WHEN :sortBy='artist' THEN artist WHEN :sortBy='dateModified' THEN dateModified ELSE title END COLLATE NOCASE ASC LIMIT :limit OFFSET :offset")
   List<TrackEntity> getPageAsc(String query, String sortBy, int limit, int offset);
 
   @Query("SELECT * FROM tracks WHERE (:query = '' OR title LIKE '%' || :query || '%' OR artist LIKE '%' || :query || '%' OR album LIKE '%' || :query || '%') ORDER BY CASE WHEN :sortBy='artist' THEN artist WHEN :sortBy='dateModified' THEN dateModified ELSE title END COLLATE NOCASE DESC LIMIT :limit OFFSET :offset")
   List<TrackEntity> getPageDesc(String query, String sortBy, int limit, int offset);
+
+  @Query("SELECT * FROM tracks WHERE stableId = :id OR mediaStoreId = :id OR sourceUri = :id LIMIT 1")
+  TrackEntity findByAnyId(String id);
+
+  @Query("SELECT * FROM tracks WHERE duration = :duration AND size = :size AND title = :title AND artist = :artist AND dateModified = :dateModified LIMIT 1")
+  TrackEntity findStrongMatch(long duration, long size, String title, String artist, long dateModified);
+
+  @Query("SELECT * FROM tracks WHERE sourceUri = :sourceUri LIMIT 1")
+  TrackEntity findBySourceUri(String sourceUri);
+
+  @Query("UPDATE tracks SET cachedFilePath = :cachedFilePath, localUri = :localUri, updatedAt = :now WHERE stableId = :stableId")
+  void updateCachePaths(String stableId, String cachedFilePath, String localUri, long now);
 
   @Query("UPDATE tracks SET missingCount = missingCount + 1, missingSince = CASE WHEN missingSince IS NULL OR missingSince=0 THEN :now ELSE missingSince END, scanCompleteness=:scanCompleteness, updatedAt=:now WHERE stableId = :stableId")
   void markMissing(String stableId, long now, String scanCompleteness);

@@ -221,11 +221,13 @@ public class MusicScannerPlugin extends Plugin {
       for (TrackEntity e : existing) byStable.put(e.stableId, e);
 
       Set<String> seen = new HashSet<>();
+      String scanCompleteness = ((existing.size() > 50 && scanned.length() < Math.max(3, existing.size() / 10)) || (existing.size() > 0 && scanned.length() == 0)) ? "partial" : "complete";
       int added = 0, updated = 0, preserved = 0, missingCandidates = 0, unavailableMarked = 0;
 
       for (int i = 0; i < scanned.length(); i++) {
         TrackEntity incoming = toEntity(new JSObject(scanned.getJSONObject(i).toString()), now);
         TrackEntity old = byStable.get(incoming.stableId);
+        if (old == null) old = dao().findStrongMatch(incoming.duration, incoming.size, incoming.title, incoming.artist, incoming.dateModified);
         if (old != null) {
           incoming.id = old.id;
           incoming.createdAt = old.createdAt;
@@ -240,13 +242,14 @@ public class MusicScannerPlugin extends Plugin {
         incoming.missingSince = null;
         incoming.unavailable = false;
         incoming.unavailableReason = null;
-        incoming.scanCompleteness = "complete";
+        incoming.scanCompleteness = scanCompleteness;
         dao().upsert(incoming);
         seen.add(incoming.stableId);
       }
 
-      for (TrackEntity e : existing) {
+      if ("complete".equals(scanCompleteness)) for (TrackEntity e : existing) {
         if (seen.contains(e.stableId)) continue;
+        if ("manual-uri".equals(e.sourceType)) continue;
         missingCandidates++;
         int nextMissing = e.missingCount + 1;
         long missingSince = e.missingSince != null && e.missingSince > 0 ? e.missingSince : now;
@@ -260,7 +263,7 @@ public class MusicScannerPlugin extends Plugin {
       }
 
       int count = dao().countAll();
-      android.util.Log.i("MusicScanner", "scanStats added=" + added + " updated=" + updated + " preserved=" + preserved + " missingCandidates=" + missingCandidates + " unavailableMarked=" + unavailableMarked + " scanCompleteness=complete");
+      android.util.Log.i("MusicScanner", "scanStats added=" + added + " updated=" + updated + " preserved=" + preserved + " missingCandidates=" + missingCandidates + " unavailableMarked=" + unavailableMarked + " scanCompleteness=" + scanCompleteness);
       JSObject result = new JSObject();
       result.put("count", count);
       result.put("added", added);
@@ -268,7 +271,7 @@ public class MusicScannerPlugin extends Plugin {
       result.put("preserved", preserved);
       result.put("missingCandidates", missingCandidates);
       result.put("unavailableMarked", unavailableMarked);
-      result.put("scanCompleteness", "complete");
+      result.put("scanCompleteness", scanCompleteness);
       result.put("success", true);
       call.resolve(result);
     } catch (Exception e) {
@@ -285,7 +288,10 @@ public class MusicScannerPlugin extends Plugin {
     }
 
     try {
-      JSArray existing = loadPersistedLibrary();
+      migrateSharedPrefsToRoomIfNeeded();
+      long now = System.currentTimeMillis() / 1000L;
+      int[] changedRef = new int[]{0};
+      AppDatabase.get(getContext()).runInTransaction(() -> {
       for (int i = 0; i < items.length(); i++) {
         JSONObject obj = items.getJSONObject(i);
         String contentUri = obj.optString("contentUri", "");
@@ -294,12 +300,17 @@ public class MusicScannerPlugin extends Plugin {
         }
         JSObject track = buildTrackFromUri(Uri.parse(contentUri));
         if (track != null) {
-          upsertTrack(existing, track);
+          TrackEntity e = toEntity(track, now);
+          e.sourceType = "manual-uri";
+          e.scanCompleteness = "complete";
+          dao().upsert(e);
+          changedRef[0]++;
         }
       }
-      persistLibrary(existing);
+      });
       JSObject result = new JSObject();
-      result.put("count", existing.length());
+      result.put("count", dao().countAll());
+      result.put("changed", changedRef[0]);
       result.put("success", true);
       call.resolve(result);
     } catch (Exception e) {
@@ -318,19 +329,12 @@ public class MusicScannerPlugin extends Plugin {
     }
 
     try {
-      JSArray existing = loadPersistedLibrary();
-      JSArray next = new JSArray();
-      for (int i = 0; i < existing.length(); i++) {
-        JSONObject obj = existing.getJSONObject(i);
-        String trackId = obj.optString("id", "");
-        if (!id.equals(trackId)) {
-          next.put(obj);
-        }
-      }
-      persistLibrary(next);
+      migrateSharedPrefsToRoomIfNeeded();
+      TrackEntity found = dao().findByAnyId(id);
+      if (found != null) dao().deleteByStableId(found.stableId);
       JSObject result = new JSObject();
       result.put("success", true);
-      result.put("count", next.length());
+      result.put("count", dao().countAll());
       call.resolve(result);
     } catch (Exception e) {
       call.reject("Error deleting track: " + e.getMessage(), e);
@@ -340,7 +344,8 @@ public class MusicScannerPlugin extends Plugin {
   @PluginMethod
   public void clearNativeLibrary(PluginCall call) {
     try {
-      persistLibrary(new JSArray());
+      migrateSharedPrefsToRoomIfNeeded();
+      dao().clearAll();
       JSObject result = new JSObject();
       result.put("success", true);
       result.put("count", 0);
@@ -360,63 +365,25 @@ public class MusicScannerPlugin extends Plugin {
 
     try {
       migrateSharedPrefsToRoomIfNeeded();
-      long queryStart = System.currentTimeMillis();
-      List<JSObject> filtered = new ArrayList<>();
-      String normalizedSearch = search == null ? "" : search.trim().toLowerCase();
-
-      for (int i = 0; i < persisted.length(); i++) {
-        JSONObject trackJson = persisted.getJSONObject(i);
-        JSObject track = new JSObject(trackJson.toString());
-        if (normalizedSearch.isEmpty()) {
-          filtered.add(track);
-          continue;
-        }
-        String haystack = (
-          track.optString("title", "") + " " +
-          track.optString("artist", "") + " " +
-          track.optString("album", "")
-        ).toLowerCase();
-        if (haystack.contains(normalizedSearch)) {
-          filtered.add(track);
-        }
-      }
-
-      Comparator<JSObject> comparator = (a, b) -> {
-        String left;
-        String right;
-        if ("artist".equals(sortBy)) {
-          left = a.optString("artist", "");
-          right = b.optString("artist", "");
-        } else if ("dateModified".equals(sortBy)) {
-          long la = a.optLong("dateModified", 0L);
-          long lb = b.optLong("dateModified", 0L);
-          return Long.compare(la, lb);
-        } else {
-          left = a.optString("title", "");
-          right = b.optString("title", "");
-        }
-        return left.compareToIgnoreCase(right);
-      };
-      Collections.sort(filtered, comparator);
-      if ("desc".equalsIgnoreCase(sortDir)) {
-        Collections.reverse(filtered);
-      }
-
       int safePage = Math.max(1, page);
       int safePageSize = Math.max(1, Math.min(100, pageSize));
-      int fromIndex = Math.min(filtered.size(), (safePage - 1) * safePageSize);
-      int toIndex = Math.min(filtered.size(), fromIndex + safePageSize);
+      int offset = (safePage - 1) * safePageSize;
+      String normalizedSearch = search == null ? "" : search.trim().toLowerCase();
+      boolean desc = "desc".equalsIgnoreCase(sortDir);
+      long queryStart = System.currentTimeMillis();
+      List<TrackEntity> pageRecords = desc
+        ? dao().getPageDesc(normalizedSearch, sortBy, safePageSize, offset)
+        : dao().getPageAsc(normalizedSearch, sortBy, safePageSize, offset);
 
       JSArray records = new JSArray();
-      for (int i = fromIndex; i < toIndex; i++) {
-        records.put(filtered.get(i));
-      }
+      for (TrackEntity e : pageRecords) records.put(toJs(e));
 
       JSObject result = new JSObject();
       result.put("page", safePage);
       result.put("pageSize", safePageSize);
-      result.put("total", filtered.size());
+      result.put("total", dao().countFiltered(normalizedSearch));
       result.put("records", records);
+      result.put("queryTimeMs", System.currentTimeMillis() - queryStart);
       call.resolve(result);
     } catch (Exception e) {
       call.reject("Error querying native library: " + e.getMessage(), e);
@@ -498,7 +465,15 @@ public class MusicScannerPlugin extends Plugin {
     android.util.Log.d("MusicScanner", "getAudioFileUrl para: " + contentUri);
 
     try {
-      JSObject result = getAudioFileUrlInternal(contentUri, trackId, sourceVersionKey, expectedSize);
+      long audioStart = System.currentTimeMillis();
+      JSObject result;
+      try {
+        result = getAudioFileUrlInternal(contentUri, trackId, sourceVersionKey, expectedSize);
+      } catch (Exception firstError) {
+        android.util.Log.w("MusicScanner", "audioResolveRetry reason=" + firstError.getMessage());
+        result = getAudioFileUrlInternal(contentUri, trackId, sourceVersionKey, expectedSize);
+      }
+      result.put("audioResolveTimeMs", System.currentTimeMillis() - audioStart);
       call.resolve(result);
     } catch (Exception e) {
       android.util.Log.e("MusicScanner", "❌ Error obteniendo audio: " + e.getMessage());
@@ -536,6 +511,11 @@ public class MusicScannerPlugin extends Plugin {
         extension = ".ogg";
       }
       
+      TrackEntity linked = dao().findByAnyId(trackId);
+      if (linked == null) linked = dao().findBySourceUri(contentUri);
+      if (linked != null && (sourceVersionKey == null || sourceVersionKey.isEmpty())) {
+        sourceVersionKey = linked.sourceVersionKey;
+      }
       String cacheIdentity = contentUri + "|" + (sourceVersionKey != null ? sourceVersionKey : trackId);
       String cacheHash = sha1(cacheIdentity);
 
@@ -554,6 +534,9 @@ public class MusicScannerPlugin extends Plugin {
         result.put("filePath", outputFile.getAbsolutePath());
         result.put("mimeType", mimeType);
         result.put("cached", true);
+        if (linked != null) {
+          dao().updateCachePaths(linked.stableId, outputFile.getAbsolutePath(), contentUri, System.currentTimeMillis() / 1000L);
+        }
         return result;
         }
       }
@@ -607,6 +590,9 @@ public class MusicScannerPlugin extends Plugin {
       result.put("mimeType", mimeType);
       result.put("size", totalBytes);
       result.put("cached", false);
+      if (linked != null) {
+        dao().updateCachePaths(linked.stableId, outputFile.getAbsolutePath(), contentUri, System.currentTimeMillis() / 1000L);
+      }
       return result;
   }
 
@@ -632,10 +618,19 @@ public class MusicScannerPlugin extends Plugin {
     try {
       File cacheDir = getAudioCacheDir();
       if (cacheDir.exists()) {
+        Set<String> protectedPaths = new HashSet<>();
+        String currentPath = call.getString("currentFilePath");
+        String nextPath = call.getString("nextFilePath");
+        if (currentPath != null && !currentPath.isEmpty()) protectedPaths.add(currentPath);
+        if (nextPath != null && !nextPath.isEmpty()) protectedPaths.add(nextPath);
+        for (TrackEntity e : dao().getAll()) {
+          if (e.cachedFilePath != null && !e.cachedFilePath.isEmpty()) protectedPaths.add(e.cachedFilePath);
+          if (e.localUri != null && e.localUri.startsWith("/")) protectedPaths.add(e.localUri);
+        }
         File[] files = cacheDir.listFiles();
         if (files != null) {
           for (File file : files) {
-            file.delete();
+            if (!protectedPaths.contains(file.getAbsolutePath())) file.delete();
           }
         }
       }
@@ -768,13 +763,16 @@ public class MusicScannerPlugin extends Plugin {
     if (prefs.getBoolean(ROOM_MIGRATED_KEY, false)) return;
     try {
       android.util.Log.i("MusicScanner", "migrationStarted");
-      JSArray old = loadPersistedLibrary();
+      JSArray old = loadLegacySharedPrefsLibrary();
       int oldCount = old.length();
       android.util.Log.i("MusicScanner", "oldTracksCount=" + oldCount);
       long now = System.currentTimeMillis() / 1000L;
       List<TrackEntity> entities = new java.util.ArrayList<>();
       for (int i = 0; i < old.length(); i++) entities.add(toEntity(new JSObject(old.getJSONObject(i).toString()), now));
-      if (!entities.isEmpty()) dao().upsertAll(entities);
+      AppDatabase db = AppDatabase.get(getContext());
+      db.runInTransaction(() -> {
+        if (!entities.isEmpty()) dao().upsertAll(entities);
+      });
       int migrated = dao().countAll();
       android.util.Log.i("MusicScanner", "migratedCount=" + migrated);
       if (oldCount > 0 && migrated < oldCount) {
@@ -903,37 +901,43 @@ public class MusicScannerPlugin extends Plugin {
   }
 
   private void persistLibrary(JSArray tracks) throws Exception {
-    getContext()
-      .getSharedPreferences(LIBRARY_PREFS, android.content.Context.MODE_PRIVATE)
-      .edit()
-            .putString(LIBRARY_KEY, tracks.toString())
-      .apply();
-
-    cachedLibraryRaw = tracks.toString();
-    cachedLibrary = new JSArray(cachedLibraryRaw);
+    migrateSharedPrefsToRoomIfNeeded();
+    long now = System.currentTimeMillis() / 1000L;
+    List<TrackEntity> entities = new ArrayList<>();
+    for (int i = 0; i < tracks.length(); i++) {
+      entities.add(toEntity(new JSObject(tracks.getJSONObject(i).toString()), now));
+    }
+    if (!entities.isEmpty()) dao().upsertAll(entities);
   }
 
   private JSArray loadPersistedLibrary() throws Exception {
+    migrateSharedPrefsToRoomIfNeeded();
+    List<TrackEntity> entities = dao().getAll();
+    if (!entities.isEmpty()) {
+      JSArray out = new JSArray();
+      for (TrackEntity e : entities) out.put(toJs(e));
+      return out;
+    }
+    return loadLegacySharedPrefsLibrary();
+  }
+
+  private JSArray loadLegacySharedPrefsLibrary() throws Exception {
     String raw = getContext()
       .getSharedPreferences(LIBRARY_PREFS, android.content.Context.MODE_PRIVATE)
       .getString(LIBRARY_KEY, "[]");
     String safeRaw = raw != null ? raw : "[]";
-    if (cachedLibrary != null && safeRaw.equals(cachedLibraryRaw)) {
-      return cachedLibrary;
-    }
-    cachedLibraryRaw = safeRaw;
-    cachedLibrary = new JSArray(safeRaw);
-    return cachedLibrary;
+    return new JSArray(safeRaw);
   }
 
   private JSObject findPersistedTrackById(String id) throws Exception {
-    JSArray tracks = loadPersistedLibrary();
+    migrateSharedPrefsToRoomIfNeeded();
+    TrackEntity entity = dao().findByAnyId(id);
+    if (entity != null) return toJs(entity);
+    JSArray tracks = loadLegacySharedPrefsLibrary();
     for (int i = 0; i < tracks.length(); i++) {
       JSONObject trackJson = tracks.getJSONObject(i);
       JSObject track = new JSObject(trackJson.toString());
-      if (id.equals(track.optString("id"))) {
-        return track;
-      }
+      if (id.equals(track.optString("id"))) return track;
     }
     return null;
   }
