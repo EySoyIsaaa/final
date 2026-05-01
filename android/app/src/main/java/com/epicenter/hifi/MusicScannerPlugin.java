@@ -32,6 +32,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -46,6 +50,10 @@ import org.json.JSONObject;
 public class MusicScannerPlugin extends Plugin {
   private static final String LIBRARY_PREFS = "epicenter_library";
   private static final String LIBRARY_KEY = "tracks_v1";
+
+  private volatile String cachedLibraryRaw = null;
+  private volatile JSArray cachedLibrary = null;
+  private static final String ROOM_MIGRATED_KEY = "room_migrated_v1";
 
   private static class AudioFormatInfo {
     Integer bitDepth;
@@ -106,7 +114,7 @@ public class MusicScannerPlugin extends Plugin {
 
   // Directorio de caché para archivos de audio temporales
   private File getAudioCacheDir() {
-    File cacheDir = new File(getContext().getCacheDir(), "audio_cache");
+    File cacheDir = new File(getContext().getFilesDir(), "audio_cache");
     if (!cacheDir.exists()) {
       cacheDir.mkdirs();
     }
@@ -202,10 +210,68 @@ public class MusicScannerPlugin extends Plugin {
     }
 
     try {
-      JSArray musicFiles = scanMusicFromMediaStore();
-      persistLibrary(musicFiles);
+      migrateSharedPrefsToRoomIfNeeded();
+      long now = System.currentTimeMillis() / 1000L;
+      android.util.Log.i("MusicScanner", "scanStarted");
+      JSArray scanned = scanMusicFromMediaStore();
+      android.util.Log.i("MusicScanner", "scanFinished scannedCount=" + scanned.length());
+
+      List<TrackEntity> existing = dao().getAll();
+      Map<String, TrackEntity> byStable = new HashMap<>();
+      for (TrackEntity e : existing) byStable.put(e.stableId, e);
+
+      Set<String> seen = new HashSet<>();
+      String scanCompleteness = ((existing.size() > 50 && scanned.length() < Math.max(3, existing.size() / 10)) || (existing.size() > 0 && scanned.length() == 0)) ? "partial" : "complete";
+      int added = 0, updated = 0, preserved = 0, missingCandidates = 0, unavailableMarked = 0;
+
+      for (int i = 0; i < scanned.length(); i++) {
+        TrackEntity incoming = toEntity(new JSObject(scanned.getJSONObject(i).toString()), now);
+        TrackEntity old = byStable.get(incoming.stableId);
+        if (old == null) old = dao().findStrongMatch(incoming.duration, incoming.size, incoming.title, incoming.artist, incoming.dateModified);
+        if (old != null) {
+          incoming.id = old.id;
+          incoming.createdAt = old.createdAt;
+          updated++;
+        } else {
+          incoming.createdAt = now;
+          added++;
+        }
+        incoming.updatedAt = now;
+        incoming.lastSeenAt = now;
+        incoming.missingCount = 0;
+        incoming.missingSince = null;
+        incoming.unavailable = false;
+        incoming.unavailableReason = null;
+        incoming.scanCompleteness = scanCompleteness;
+        dao().upsert(incoming);
+        seen.add(incoming.stableId);
+      }
+
+      if ("complete".equals(scanCompleteness)) for (TrackEntity e : existing) {
+        if (seen.contains(e.stableId)) continue;
+        if ("manual-uri".equals(e.sourceType)) continue;
+        missingCandidates++;
+        int nextMissing = e.missingCount + 1;
+        long missingSince = e.missingSince != null && e.missingSince > 0 ? e.missingSince : now;
+        dao().markMissing(e.stableId, now, "complete");
+        if (nextMissing >= 3 && (now - missingSince) >= 24 * 60 * 60) {
+          dao().markUnavailable(e.stableId, true, "missing_from_repeated_scans", now);
+          unavailableMarked++;
+        } else {
+          preserved++;
+        }
+      }
+
+      int count = dao().countAll();
+      android.util.Log.i("MusicScanner", "scanStats added=" + added + " updated=" + updated + " preserved=" + preserved + " missingCandidates=" + missingCandidates + " unavailableMarked=" + unavailableMarked + " scanCompleteness=" + scanCompleteness);
       JSObject result = new JSObject();
-      result.put("count", musicFiles.length());
+      result.put("count", count);
+      result.put("added", added);
+      result.put("updated", updated);
+      result.put("preserved", preserved);
+      result.put("missingCandidates", missingCandidates);
+      result.put("unavailableMarked", unavailableMarked);
+      result.put("scanCompleteness", scanCompleteness);
       result.put("success", true);
       call.resolve(result);
     } catch (Exception e) {
@@ -222,7 +288,10 @@ public class MusicScannerPlugin extends Plugin {
     }
 
     try {
-      JSArray existing = loadPersistedLibrary();
+      migrateSharedPrefsToRoomIfNeeded();
+      long now = System.currentTimeMillis() / 1000L;
+      int[] changedRef = new int[]{0};
+      AppDatabase.get(getContext()).runInTransaction(() -> {
       for (int i = 0; i < items.length(); i++) {
         JSONObject obj = items.getJSONObject(i);
         String contentUri = obj.optString("contentUri", "");
@@ -231,16 +300,58 @@ public class MusicScannerPlugin extends Plugin {
         }
         JSObject track = buildTrackFromUri(Uri.parse(contentUri));
         if (track != null) {
-          upsertTrack(existing, track);
+          TrackEntity e = toEntity(track, now);
+          e.sourceType = "manual-uri";
+          e.scanCompleteness = "complete";
+          dao().upsert(e);
+          changedRef[0]++;
         }
       }
-      persistLibrary(existing);
+      });
       JSObject result = new JSObject();
-      result.put("count", existing.length());
+      result.put("count", dao().countAll());
+      result.put("changed", changedRef[0]);
       result.put("success", true);
       call.resolve(result);
     } catch (Exception e) {
       call.reject("Error importing manual tracks: " + e.getMessage(), e);
+    }
+  }
+
+
+
+  @PluginMethod
+  public void deleteTrackById(PluginCall call) {
+    String id = call.getString("id");
+    if (id == null || id.isEmpty()) {
+      call.reject("id is required");
+      return;
+    }
+
+    try {
+      migrateSharedPrefsToRoomIfNeeded();
+      TrackEntity found = dao().findByAnyId(id);
+      if (found != null) dao().deleteByStableId(found.stableId);
+      JSObject result = new JSObject();
+      result.put("success", true);
+      result.put("count", dao().countAll());
+      call.resolve(result);
+    } catch (Exception e) {
+      call.reject("Error deleting track: " + e.getMessage(), e);
+    }
+  }
+
+  @PluginMethod
+  public void clearNativeLibrary(PluginCall call) {
+    try {
+      migrateSharedPrefsToRoomIfNeeded();
+      dao().clearAll();
+      JSObject result = new JSObject();
+      result.put("success", true);
+      result.put("count", 0);
+      call.resolve(result);
+    } catch (Exception e) {
+      call.reject("Error clearing native library: " + e.getMessage(), e);
     }
   }
 
@@ -253,63 +364,26 @@ public class MusicScannerPlugin extends Plugin {
     String sortDir = call.getString("sortDir", "asc");
 
     try {
-      JSArray persisted = loadPersistedLibrary();
-      List<JSObject> filtered = new ArrayList<>();
-      String normalizedSearch = search == null ? "" : search.trim().toLowerCase();
-
-      for (int i = 0; i < persisted.length(); i++) {
-        JSONObject trackJson = persisted.getJSONObject(i);
-        JSObject track = new JSObject(trackJson.toString());
-        if (normalizedSearch.isEmpty()) {
-          filtered.add(track);
-          continue;
-        }
-        String haystack = (
-          track.optString("title", "") + " " +
-          track.optString("artist", "") + " " +
-          track.optString("album", "")
-        ).toLowerCase();
-        if (haystack.contains(normalizedSearch)) {
-          filtered.add(track);
-        }
-      }
-
-      Comparator<JSObject> comparator = (a, b) -> {
-        String left;
-        String right;
-        if ("artist".equals(sortBy)) {
-          left = a.optString("artist", "");
-          right = b.optString("artist", "");
-        } else if ("dateModified".equals(sortBy)) {
-          long la = a.optLong("dateModified", 0L);
-          long lb = b.optLong("dateModified", 0L);
-          return Long.compare(la, lb);
-        } else {
-          left = a.optString("title", "");
-          right = b.optString("title", "");
-        }
-        return left.compareToIgnoreCase(right);
-      };
-      Collections.sort(filtered, comparator);
-      if ("desc".equalsIgnoreCase(sortDir)) {
-        Collections.reverse(filtered);
-      }
-
+      migrateSharedPrefsToRoomIfNeeded();
       int safePage = Math.max(1, page);
-      int safePageSize = Math.max(1, Math.min(500, pageSize));
-      int fromIndex = Math.min(filtered.size(), (safePage - 1) * safePageSize);
-      int toIndex = Math.min(filtered.size(), fromIndex + safePageSize);
+      int safePageSize = Math.max(1, Math.min(100, pageSize));
+      int offset = (safePage - 1) * safePageSize;
+      String normalizedSearch = search == null ? "" : search.trim().toLowerCase();
+      boolean desc = "desc".equalsIgnoreCase(sortDir);
+      long queryStart = System.currentTimeMillis();
+      List<TrackEntity> pageRecords = desc
+        ? dao().getPageDesc(normalizedSearch, sortBy, safePageSize, offset)
+        : dao().getPageAsc(normalizedSearch, sortBy, safePageSize, offset);
 
       JSArray records = new JSArray();
-      for (int i = fromIndex; i < toIndex; i++) {
-        records.put(filtered.get(i));
-      }
+      for (TrackEntity e : pageRecords) records.put(toJs(e));
 
       JSObject result = new JSObject();
       result.put("page", safePage);
       result.put("pageSize", safePageSize);
-      result.put("total", filtered.size());
+      result.put("total", dao().countFiltered(normalizedSearch));
       result.put("records", records);
+      result.put("queryTimeMs", System.currentTimeMillis() - queryStart);
       call.resolve(result);
     } catch (Exception e) {
       call.reject("Error querying native library: " + e.getMessage(), e);
@@ -391,7 +465,15 @@ public class MusicScannerPlugin extends Plugin {
     android.util.Log.d("MusicScanner", "getAudioFileUrl para: " + contentUri);
 
     try {
-      JSObject result = getAudioFileUrlInternal(contentUri, trackId, sourceVersionKey, expectedSize);
+      long audioStart = System.currentTimeMillis();
+      JSObject result;
+      try {
+        result = getAudioFileUrlInternal(contentUri, trackId, sourceVersionKey, expectedSize);
+      } catch (Exception firstError) {
+        android.util.Log.w("MusicScanner", "audioResolveRetry reason=" + firstError.getMessage());
+        result = getAudioFileUrlInternal(contentUri, trackId, sourceVersionKey, expectedSize);
+      }
+      result.put("audioResolveTimeMs", System.currentTimeMillis() - audioStart);
       call.resolve(result);
     } catch (Exception e) {
       android.util.Log.e("MusicScanner", "❌ Error obteniendo audio: " + e.getMessage());
@@ -429,6 +511,11 @@ public class MusicScannerPlugin extends Plugin {
         extension = ".ogg";
       }
       
+      TrackEntity linked = dao().findByAnyId(trackId);
+      if (linked == null) linked = dao().findBySourceUri(contentUri);
+      if (linked != null && (sourceVersionKey == null || sourceVersionKey.isEmpty())) {
+        sourceVersionKey = linked.sourceVersionKey;
+      }
       String cacheIdentity = contentUri + "|" + (sourceVersionKey != null ? sourceVersionKey : trackId);
       String cacheHash = sha1(cacheIdentity);
 
@@ -447,6 +534,9 @@ public class MusicScannerPlugin extends Plugin {
         result.put("filePath", outputFile.getAbsolutePath());
         result.put("mimeType", mimeType);
         result.put("cached", true);
+        if (linked != null) {
+          dao().updateCachePaths(linked.stableId, outputFile.getAbsolutePath(), contentUri, System.currentTimeMillis() / 1000L);
+        }
         return result;
         }
       }
@@ -500,6 +590,9 @@ public class MusicScannerPlugin extends Plugin {
       result.put("mimeType", mimeType);
       result.put("size", totalBytes);
       result.put("cached", false);
+      if (linked != null) {
+        dao().updateCachePaths(linked.stableId, outputFile.getAbsolutePath(), contentUri, System.currentTimeMillis() / 1000L);
+      }
       return result;
   }
 
@@ -525,10 +618,19 @@ public class MusicScannerPlugin extends Plugin {
     try {
       File cacheDir = getAudioCacheDir();
       if (cacheDir.exists()) {
+        Set<String> protectedPaths = new HashSet<>();
+        String currentPath = call.getString("currentFilePath");
+        String nextPath = call.getString("nextFilePath");
+        if (currentPath != null && !currentPath.isEmpty()) protectedPaths.add(currentPath);
+        if (nextPath != null && !nextPath.isEmpty()) protectedPaths.add(nextPath);
+        for (TrackEntity e : dao().getAll()) {
+          if (e.cachedFilePath != null && !e.cachedFilePath.isEmpty()) protectedPaths.add(e.cachedFilePath);
+          if (e.localUri != null && e.localUri.startsWith("/")) protectedPaths.add(e.localUri);
+        }
         File[] files = cacheDir.listFiles();
         if (files != null) {
           for (File file : files) {
-            file.delete();
+            if (!protectedPaths.contains(file.getAbsolutePath())) file.delete();
           }
         }
       }
@@ -586,6 +688,101 @@ public class MusicScannerPlugin extends Plugin {
       JSObject result = new JSObject();
       result.put("dataUrl", (String) null);
       call.resolve(result);
+    }
+  }
+
+
+  private TrackDao dao() {
+    return AppDatabase.get(getContext()).trackDao();
+  }
+
+  private String stableIdFrom(JSObject track) {
+    String mediaStoreId = track.optString("mediaStoreId", track.optString("id", ""));
+    String sourceUri = track.optString("contentUri", track.optString("sourceUri", ""));
+    return sha1(mediaStoreId + "|" + sourceUri);
+  }
+
+  private TrackEntity toEntity(JSObject track, long now) {
+    TrackEntity e = new TrackEntity();
+    e.stableId = stableIdFrom(track);
+    e.mediaStoreId = track.optString("mediaStoreId", track.optString("id", null));
+    e.sourceUri = track.optString("contentUri", track.optString("sourceUri", null));
+    e.localUri = null;
+    e.cachedFilePath = null;
+    e.title = track.optString("title", track.optString("name", "Unknown"));
+    e.artist = track.optString("artist", "Unknown Artist");
+    e.album = track.optString("album", "Unknown Album");
+    e.duration = track.optLong("duration", 0L);
+    e.size = track.optLong("size", 0L);
+    e.dateModified = track.optLong("dateModified", 0L);
+    e.mimeType = track.optString("mimeType", "audio/mpeg");
+    String name = track.optString("name", "");
+    int dot = name.lastIndexOf('.');
+    e.extension = dot > 0 ? name.substring(dot + 1).toLowerCase() : "";
+    e.sourceType = "media-store";
+    e.sourceVersionKey = track.optString("sourceVersionKey", (e.mediaStoreId != null ? e.mediaStoreId : "") + ":" + e.size + ":" + e.dateModified);
+    e.unavailable = track.optBoolean("unavailable", false);
+    e.unavailableReason = track.optString("unavailableReason", null);
+    e.lastSeenAt = track.optLong("lastSeenAt", now);
+    long ms = track.optLong("missingSince", 0L);
+    e.missingSince = ms > 0 ? ms : null;
+    e.missingCount = track.optInt("missingCount", 0);
+    e.scanCompleteness = track.optString("scanCompleteness", "complete");
+    e.createdAt = track.optLong("createdAt", now);
+    e.updatedAt = now;
+    return e;
+  }
+
+  private JSObject toJs(TrackEntity e) {
+    JSObject o = new JSObject();
+    o.put("id", e.mediaStoreId != null ? e.mediaStoreId : e.stableId);
+    o.put("stableId", e.stableId);
+    o.put("mediaStoreId", e.mediaStoreId);
+    o.put("contentUri", e.sourceUri);
+    o.put("sourceUri", e.sourceUri);
+    o.put("name", e.title);
+    o.put("title", e.title);
+    o.put("artist", e.artist);
+    o.put("album", e.album);
+    o.put("duration", e.duration);
+    o.put("size", e.size);
+    o.put("mimeType", e.mimeType);
+    o.put("dateModified", e.dateModified);
+    o.put("sourceVersionKey", e.sourceVersionKey);
+    o.put("unavailable", e.unavailable);
+    o.put("unavailableReason", e.unavailableReason);
+    o.put("lastSeenAt", e.lastSeenAt);
+    o.put("missingSince", e.missingSince != null ? e.missingSince : 0);
+    o.put("missingCount", e.missingCount);
+    o.put("scanCompleteness", e.scanCompleteness);
+    return o;
+  }
+
+  private synchronized void migrateSharedPrefsToRoomIfNeeded() {
+    android.content.SharedPreferences prefs = getContext().getSharedPreferences(LIBRARY_PREFS, android.content.Context.MODE_PRIVATE);
+    if (prefs.getBoolean(ROOM_MIGRATED_KEY, false)) return;
+    try {
+      android.util.Log.i("MusicScanner", "migrationStarted");
+      JSArray old = loadLegacySharedPrefsLibrary();
+      int oldCount = old.length();
+      android.util.Log.i("MusicScanner", "oldTracksCount=" + oldCount);
+      long now = System.currentTimeMillis() / 1000L;
+      List<TrackEntity> entities = new java.util.ArrayList<>();
+      for (int i = 0; i < old.length(); i++) entities.add(toEntity(new JSObject(old.getJSONObject(i).toString()), now));
+      AppDatabase db = AppDatabase.get(getContext());
+      db.runInTransaction(() -> {
+        if (!entities.isEmpty()) dao().upsertAll(entities);
+      });
+      int migrated = dao().countAll();
+      android.util.Log.i("MusicScanner", "migratedCount=" + migrated);
+      if (oldCount > 0 && migrated < oldCount) {
+        android.util.Log.e("MusicScanner", "migrationFailed: migratedCount < oldTracksCount");
+        return;
+      }
+      prefs.edit().putBoolean(ROOM_MIGRATED_KEY, true).apply();
+      android.util.Log.i("MusicScanner", "migrationCompleted");
+    } catch (Exception e) {
+      android.util.Log.e("MusicScanner", "migrationFailed", e);
     }
   }
 
@@ -704,28 +901,43 @@ public class MusicScannerPlugin extends Plugin {
   }
 
   private void persistLibrary(JSArray tracks) throws Exception {
-    getContext()
-      .getSharedPreferences(LIBRARY_PREFS, android.content.Context.MODE_PRIVATE)
-      .edit()
-      .putString(LIBRARY_KEY, tracks.toString())
-      .apply();
+    migrateSharedPrefsToRoomIfNeeded();
+    long now = System.currentTimeMillis() / 1000L;
+    List<TrackEntity> entities = new ArrayList<>();
+    for (int i = 0; i < tracks.length(); i++) {
+      entities.add(toEntity(new JSObject(tracks.getJSONObject(i).toString()), now));
+    }
+    if (!entities.isEmpty()) dao().upsertAll(entities);
   }
 
   private JSArray loadPersistedLibrary() throws Exception {
+    migrateSharedPrefsToRoomIfNeeded();
+    List<TrackEntity> entities = dao().getAll();
+    if (!entities.isEmpty()) {
+      JSArray out = new JSArray();
+      for (TrackEntity e : entities) out.put(toJs(e));
+      return out;
+    }
+    return loadLegacySharedPrefsLibrary();
+  }
+
+  private JSArray loadLegacySharedPrefsLibrary() throws Exception {
     String raw = getContext()
       .getSharedPreferences(LIBRARY_PREFS, android.content.Context.MODE_PRIVATE)
       .getString(LIBRARY_KEY, "[]");
-    return new JSArray(raw != null ? raw : "[]");
+    String safeRaw = raw != null ? raw : "[]";
+    return new JSArray(safeRaw);
   }
 
   private JSObject findPersistedTrackById(String id) throws Exception {
-    JSArray tracks = loadPersistedLibrary();
+    migrateSharedPrefsToRoomIfNeeded();
+    TrackEntity entity = dao().findByAnyId(id);
+    if (entity != null) return toJs(entity);
+    JSArray tracks = loadLegacySharedPrefsLibrary();
     for (int i = 0; i < tracks.length(); i++) {
       JSONObject trackJson = tracks.getJSONObject(i);
       JSObject track = new JSObject(trackJson.toString());
-      if (id.equals(track.optString("id"))) {
-        return track;
-      }
+      if (id.equals(track.optString("id"))) return track;
     }
     return null;
   }
@@ -784,7 +996,7 @@ public class MusicScannerPlugin extends Plugin {
       fileObj.put("mimeType", mimeType);
       fileObj.put("contentUri", uri.toString());
       fileObj.put("dateModified", System.currentTimeMillis() / 1000L);
-      fileObj.put("sourceVersionKey", id + ":" + size + ":" + (System.currentTimeMillis() / 1000L));
+      fileObj.put("sourceVersionKey", id + ":" + size + ":" + fileObj.optLong("dateModified", 0L));
       if (formatInfo.bitDepth != null) fileObj.put("bitDepth", formatInfo.bitDepth);
       if (formatInfo.sampleRate != null) fileObj.put("sampleRate", formatInfo.sampleRate);
       if (formatInfo.bitrate != null) fileObj.put("bitrate", formatInfo.bitrate);
