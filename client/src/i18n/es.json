@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "Epicenter Hi-Fi",
-    "version": "5.1.0"
+    "version": "6.0.0"
   },
   "tabs": {
     "now": "Ahora",
@@ -196,7 +196,7 @@
   },
   "howToUse": {
     "title": "Cómo usar Epicenter Hi-Fi",
-    "intro": "Epicenter Hi-Fi v5.1.0 es un reproductor local con énfasis en Epicenter DSP e implementación de IA para experiencias de audio inteligentes.",
+    "intro": "Epicenter Hi-Fi v6.0.0 es un reproductor local con énfasis en Epicenter DSP e implementación de IA para experiencias de audio inteligentes.",
     "libraryTitle": "1. Importa tu música",
     "libraryBody": "Usa la pantalla principal de la biblioteca para importar archivos manualmente o escanear tu dispositivo en Android.",
     "playerTitle": "2. Inicia la reproducción",
