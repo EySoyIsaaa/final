@@ -696,6 +696,15 @@ public class MusicScannerPlugin extends Plugin {
         if (e.localUri != null && e.localUri.startsWith("/")) protectedCachePaths.add(e.localUri);
       }
       if (cacheDir.exists()) {
+        Set<String> protectedPaths = new HashSet<>();
+        String currentPath = call.getString("currentFilePath");
+        String nextPath = call.getString("nextFilePath");
+        if (currentPath != null && !currentPath.isEmpty()) protectedPaths.add(currentPath);
+        if (nextPath != null && !nextPath.isEmpty()) protectedPaths.add(nextPath);
+        for (TrackEntity e : dao().getAll()) {
+          if (e.cachedFilePath != null && !e.cachedFilePath.isEmpty()) protectedPaths.add(e.cachedFilePath);
+          if (e.localUri != null && e.localUri.startsWith("/")) protectedPaths.add(e.localUri);
+        }
         File[] files = cacheDir.listFiles();
         if (files != null) {
           for (File file : files) {
