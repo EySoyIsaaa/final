@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "Epicenter Hi-Fi",
-    "version": "5.1.0"
+    "version": "6.0.0"
   },
   "tabs": {
     "now": "Now",
@@ -196,7 +196,7 @@
   },
   "howToUse": {
     "title": "How to use Epicenter Hi-Fi",
-    "intro": "Epicenter Hi-Fi v5.1.0 is a local music player focused on Epicenter DSP plus AI implementation for intelligent audio experiences.",
+    "intro": "Epicenter Hi-Fi v6.0.0 is a local music player focused on Epicenter DSP plus AI implementation for intelligent audio experiences.",
     "libraryTitle": "1. Import your music",
     "libraryBody": "Use the main library screen to import files manually or scan your device on Android.",
     "playerTitle": "2. Start playback",
