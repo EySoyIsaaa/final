@@ -47,6 +47,9 @@ public class MusicScannerPlugin extends Plugin {
   private static final String LIBRARY_PREFS = "epicenter_library";
   private static final String LIBRARY_KEY = "tracks_v1";
 
+  private volatile String cachedLibraryRaw = null;
+  private volatile JSArray cachedLibrary = null;
+
   private static class AudioFormatInfo {
     Integer bitDepth;
     Integer sampleRate;
@@ -106,7 +109,7 @@ public class MusicScannerPlugin extends Plugin {
 
   // Directorio de caché para archivos de audio temporales
   private File getAudioCacheDir() {
-    File cacheDir = new File(getContext().getCacheDir(), "audio_cache");
+    File cacheDir = new File(getContext().getFilesDir(), "audio_cache");
     if (!cacheDir.exists()) {
       cacheDir.mkdirs();
     }
@@ -202,10 +205,55 @@ public class MusicScannerPlugin extends Plugin {
     }
 
     try {
-      JSArray musicFiles = scanMusicFromMediaStore();
-      persistLibrary(musicFiles);
+      long now = System.currentTimeMillis() / 1000L;
+      JSArray scanned = scanMusicFromMediaStore();
+      JSArray existing = loadPersistedLibrary();
+      java.util.Map<String, JSObject> byIdentity = new java.util.HashMap<>();
+      for (int i = 0; i < existing.length(); i++) {
+        JSObject ex = new JSObject(existing.getJSONObject(i).toString());
+        String key = ex.optString("mediaStoreId", "") + "|" + ex.optString("contentUri", "");
+        byIdentity.put(key, ex);
+      }
+
+      JSArray merged = new JSArray();
+      java.util.Set<String> seen = new java.util.HashSet<>();
+      int added = 0;
+      int updated = 0;
+      for (int i = 0; i < scanned.length(); i++) {
+        JSObject tr = new JSObject(scanned.getJSONObject(i).toString());
+        String key = tr.optString("id", "") + "|" + tr.optString("contentUri", "");
+        JSObject oldTrack = byIdentity.get(key);
+        tr.put("mediaStoreId", tr.optString("id", ""));
+        tr.put("lastSeenAt", now);
+        tr.put("missingCount", 0);
+        tr.put("missingSince", 0);
+        tr.put("scanCompleteness", "complete");
+        tr.put("unavailable", false);
+        tr.put("unavailableReason", "");
+        if (oldTrack != null) updated++; else added++;
+        merged.put(tr);
+        seen.add(key);
+      }
+      int preserved = 0;
+      for (int i = 0; i < existing.length(); i++) {
+        JSObject ex = new JSObject(existing.getJSONObject(i).toString());
+        String key = ex.optString("mediaStoreId", "") + "|" + ex.optString("contentUri", "");
+        if (seen.contains(key)) continue;
+        int missingCount = ex.optInt("missingCount", 0) + 1;
+        ex.put("missingCount", missingCount);
+        if (ex.optLong("missingSince", 0L) <= 0L) ex.put("missingSince", now);
+        ex.put("scanCompleteness", "partial");
+        merged.put(ex);
+        preserved++;
+      }
+
+      persistLibrary(merged);
       JSObject result = new JSObject();
-      result.put("count", musicFiles.length());
+      result.put("count", merged.length());
+      result.put("added", added);
+      result.put("updated", updated);
+      result.put("preserved", preserved);
+      result.put("scanCompleteness", "complete");
       result.put("success", true);
       call.resolve(result);
     } catch (Exception e) {
@@ -241,6 +289,49 @@ public class MusicScannerPlugin extends Plugin {
       call.resolve(result);
     } catch (Exception e) {
       call.reject("Error importing manual tracks: " + e.getMessage(), e);
+    }
+  }
+
+
+
+  @PluginMethod
+  public void deleteTrackById(PluginCall call) {
+    String id = call.getString("id");
+    if (id == null || id.isEmpty()) {
+      call.reject("id is required");
+      return;
+    }
+
+    try {
+      JSArray existing = loadPersistedLibrary();
+      JSArray next = new JSArray();
+      for (int i = 0; i < existing.length(); i++) {
+        JSONObject obj = existing.getJSONObject(i);
+        String trackId = obj.optString("id", "");
+        if (!id.equals(trackId)) {
+          next.put(obj);
+        }
+      }
+      persistLibrary(next);
+      JSObject result = new JSObject();
+      result.put("success", true);
+      result.put("count", next.length());
+      call.resolve(result);
+    } catch (Exception e) {
+      call.reject("Error deleting track: " + e.getMessage(), e);
+    }
+  }
+
+  @PluginMethod
+  public void clearNativeLibrary(PluginCall call) {
+    try {
+      persistLibrary(new JSArray());
+      JSObject result = new JSObject();
+      result.put("success", true);
+      result.put("count", 0);
+      call.resolve(result);
+    } catch (Exception e) {
+      call.reject("Error clearing native library: " + e.getMessage(), e);
     }
   }
 
@@ -296,7 +387,7 @@ public class MusicScannerPlugin extends Plugin {
       }
 
       int safePage = Math.max(1, page);
-      int safePageSize = Math.max(1, Math.min(500, pageSize));
+      int safePageSize = Math.max(1, Math.min(100, pageSize));
       int fromIndex = Math.min(filtered.size(), (safePage - 1) * safePageSize);
       int toIndex = Math.min(filtered.size(), fromIndex + safePageSize);
 
@@ -707,15 +798,24 @@ public class MusicScannerPlugin extends Plugin {
     getContext()
       .getSharedPreferences(LIBRARY_PREFS, android.content.Context.MODE_PRIVATE)
       .edit()
-      .putString(LIBRARY_KEY, tracks.toString())
+            .putString(LIBRARY_KEY, tracks.toString())
       .apply();
+
+    cachedLibraryRaw = tracks.toString();
+    cachedLibrary = new JSArray(cachedLibraryRaw);
   }
 
   private JSArray loadPersistedLibrary() throws Exception {
     String raw = getContext()
       .getSharedPreferences(LIBRARY_PREFS, android.content.Context.MODE_PRIVATE)
       .getString(LIBRARY_KEY, "[]");
-    return new JSArray(raw != null ? raw : "[]");
+    String safeRaw = raw != null ? raw : "[]";
+    if (cachedLibrary != null && safeRaw.equals(cachedLibraryRaw)) {
+      return cachedLibrary;
+    }
+    cachedLibraryRaw = safeRaw;
+    cachedLibrary = new JSArray(safeRaw);
+    return cachedLibrary;
   }
 
   private JSObject findPersistedTrackById(String id) throws Exception {
@@ -784,7 +884,7 @@ public class MusicScannerPlugin extends Plugin {
       fileObj.put("mimeType", mimeType);
       fileObj.put("contentUri", uri.toString());
       fileObj.put("dateModified", System.currentTimeMillis() / 1000L);
-      fileObj.put("sourceVersionKey", id + ":" + size + ":" + (System.currentTimeMillis() / 1000L));
+      fileObj.put("sourceVersionKey", id + ":" + size + ":" + fileObj.optLong("dateModified", 0L));
       if (formatInfo.bitDepth != null) fileObj.put("bitDepth", formatInfo.bitDepth);
       if (formatInfo.sampleRate != null) fileObj.put("sampleRate", formatInfo.sampleRate);
       if (formatInfo.bitrate != null) fileObj.put("bitrate", formatInfo.bitrate);
