@@ -586,6 +586,19 @@ public class MusicScannerPlugin extends Plugin {
       TrackEntity linked = dao().getByStableId(trackId);
       if (linked == null) linked = dao().getByMediaStoreId(trackId);
       if (linked == null) linked = dao().findBySourceUri(contentUri);
+      if (linked != null && linked.cachedFilePath != null && !linked.cachedFilePath.isEmpty()) {
+        File linkedCache = new File(linked.cachedFilePath);
+        if (linkedCache.exists() && linkedCache.length() > 0 && (expectedSize == null || expectedSize <= 0 || linkedCache.length() == expectedSize)) {
+          JSObject fast = new JSObject();
+          fast.put("filePath", linkedCache.getAbsolutePath());
+          fast.put("mimeType", mimeType);
+          fast.put("cached", true);
+          fast.put("cacheKey", "linked-fast-path");
+          fast.put("resolvedStableId", linked.stableId);
+          android.util.Log.i("MusicScanner", "audioResolvedFastPath url=" + linkedCache.getAbsolutePath());
+          return fast;
+        }
+      }
       if (linked != null && (sourceVersionKey == null || sourceVersionKey.isEmpty())) {
         sourceVersionKey = linked.sourceVersionKey;
       }
@@ -854,7 +867,13 @@ public class MusicScannerPlugin extends Plugin {
     o.put("dateModified", e.dateModified);
     o.put("sourceVersionKey", e.sourceVersionKey);
     o.put("albumId", e.albumId);
-    o.put("albumArtUri", e.albumArtUri);
+    if (e.albumArtUri != null && !e.albumArtUri.isEmpty()) {
+      o.put("albumArtUri", e.albumArtUri);
+    } else if (e.albumId != null && e.albumId > 0) {
+      o.put("albumArtUri", "content://media/external/audio/albumart/" + e.albumId);
+    } else {
+      o.put("albumArtUri", (String) null);
+    }
     if (e.bitDepth != null) o.put("bitDepth", e.bitDepth);
     if (e.sampleRate != null) o.put("sampleRate", e.sampleRate);
     if (e.bitrate != null) o.put("bitrate", e.bitrate);
