@@ -383,13 +383,17 @@ export function useIntegratedAudioProcessor(): IntegratedAudioController {
       objectUrlRef.current = null;
     }
 
+    const previousAudioUrl = audioElement.src;
     if (typeof file === 'string') {
+      audioElement.src = '';
       audioElement.src = file;
     } else {
       const objectUrl = URL.createObjectURL(file);
       objectUrlRef.current = objectUrl;
+      audioElement.src = '';
       audioElement.src = objectUrl;
     }
+    console.log('[AudioResolve]', { previousAudioUrl, newAudioUrl: audioElement.src, audioElementSrc: audioElement.src });
     audioElement.load();
     
     try {

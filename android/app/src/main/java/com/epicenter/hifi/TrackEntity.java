@@ -37,6 +37,13 @@ public class TrackEntity {
   public String extension;
   public String sourceType;
   public String sourceVersionKey;
+  public Long albumId;
+  public String albumArtUri;
+  public Integer bitDepth;
+  public Integer sampleRate;
+  public Integer bitrate;
+  public Integer channels;
+  public Boolean isHiRes;
   public boolean unavailable;
   public String unavailableReason;
   public long lastSeenAt;

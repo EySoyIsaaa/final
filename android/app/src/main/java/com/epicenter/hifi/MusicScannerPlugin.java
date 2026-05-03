@@ -62,6 +62,7 @@ public class MusicScannerPlugin extends Plugin {
     Integer bitDepth;
     Integer sampleRate;
     Integer bitrate;
+    Integer channels;
   }
 
   private AudioFormatInfo getAudioFormatInfo(Uri contentUri) {
@@ -93,6 +94,9 @@ public class MusicScannerPlugin extends Plugin {
 
         if (info.bitrate == null && format.containsKey(MediaFormat.KEY_BIT_RATE)) {
           info.bitrate = format.getInteger(MediaFormat.KEY_BIT_RATE);
+        }
+        if (format.containsKey(MediaFormat.KEY_CHANNEL_COUNT)) {
+          info.channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
         }
 
         if (format.containsKey("bits-per-sample")) {
@@ -251,6 +255,7 @@ public class MusicScannerPlugin extends Plugin {
       for (TrackEntity e : existing) byStable.put(e.stableId, e);
 
       Set<String> seen = new HashSet<>();
+      Set<Long> consumedExistingIds = new HashSet<>();
       AtomicInteger added = new AtomicInteger(0), updated = new AtomicInteger(0), preserved = new AtomicInteger(0), missingCandidates = new AtomicInteger(0), unavailableMarked = new AtomicInteger(0);
 
       AppDatabase.get(getContext()).runInTransaction(() -> {
@@ -265,11 +270,13 @@ public class MusicScannerPlugin extends Plugin {
           TrackEntity old = byStable.get(incoming.stableId);
           if (old == null) {
             for (TrackEntity candidate : existing) {
+              if (consumedExistingIds.contains(candidate.id)) continue;
               if (candidate.duration == incoming.duration &&
                 candidate.size == incoming.size &&
                 incoming.dateModified > 0 &&
                 candidate.dateModified == incoming.dateModified &&
                 safeEq(candidate.title, incoming.title) &&
+                safeEq(candidate.album, incoming.album) &&
                 safeEq(candidate.artist, incoming.artist)) {
                 old = candidate;
                 break;
@@ -279,6 +286,7 @@ public class MusicScannerPlugin extends Plugin {
           if (old != null) {
             incoming.id = old.id;
             incoming.createdAt = old.createdAt;
+            consumedExistingIds.add(old.id);
             updated.incrementAndGet();
           } else {
             incoming.createdAt = now;
@@ -575,13 +583,16 @@ public class MusicScannerPlugin extends Plugin {
         extension = ".ogg";
       }
       
-      TrackEntity linked = dao().findByAnyId(trackId);
+      TrackEntity linked = dao().findByStableId(trackId);
+      if (linked == null) linked = dao().getByMediaStoreId(trackId);
       if (linked == null) linked = dao().findBySourceUri(contentUri);
       if (linked != null && (sourceVersionKey == null || sourceVersionKey.isEmpty())) {
         sourceVersionKey = linked.sourceVersionKey;
       }
-      String cacheIdentity = contentUri + "|" + (sourceVersionKey != null ? sourceVersionKey : trackId);
+      String stableForCache = linked != null ? linked.stableId : sha1(trackId + "|" + contentUri);
+      String cacheIdentity = stableForCache + "|" + contentUri + "|" + (sourceVersionKey != null ? sourceVersionKey : trackId);
       String cacheHash = sha1(cacheIdentity);
+      android.util.Log.i("MusicScanner", "audioResolve trackId=" + trackId + " stableId=" + stableForCache + " sourceUri=" + contentUri + " sourceVersionKey=" + sourceVersionKey + " cacheKey=" + cacheHash + " linkedCachedFilePath=" + (linked != null ? linked.cachedFilePath : ""));
 
       // Crear archivo en caché
       File cacheDir = getAudioCacheDir();
@@ -590,6 +601,10 @@ public class MusicScannerPlugin extends Plugin {
       
       // Si el archivo ya existe en caché, devolverlo directamente
       if (outputFile.exists()) {
+        if (linked != null && linked.cachedFilePath != null && !linked.cachedFilePath.isEmpty() && !outputFile.getAbsolutePath().equals(linked.cachedFilePath)) {
+          android.util.Log.w("MusicScanner", "audioCacheMismatch stableId=" + linked.stableId + " expected=" + outputFile.getAbsolutePath() + " linked=" + linked.cachedFilePath);
+          outputFile.delete();
+        }
         if (outputFile.length() == 0 || (expectedSize != null && expectedSize > 0 && outputFile.length() != expectedSize)) {
           outputFile.delete();
         } else {
@@ -598,9 +613,12 @@ public class MusicScannerPlugin extends Plugin {
         result.put("filePath", outputFile.getAbsolutePath());
         result.put("mimeType", mimeType);
         result.put("cached", true);
+        result.put("cacheKey", cacheHash);
+        result.put("resolvedStableId", stableForCache);
         if (linked != null) {
           dao().updateCachePaths(linked.stableId, outputFile.getAbsolutePath(), contentUri, System.currentTimeMillis() / 1000L);
         }
+        android.util.Log.i("MusicScanner", "audioResolved url=" + outputFile.getAbsolutePath() + " cached=true");
         return result;
         }
       }
@@ -659,9 +677,12 @@ public class MusicScannerPlugin extends Plugin {
       result.put("mimeType", mimeType);
       result.put("size", totalBytes);
       result.put("cached", false);
+      result.put("cacheKey", cacheHash);
+      result.put("resolvedStableId", stableForCache);
       if (linked != null) {
         dao().updateCachePaths(linked.stableId, outputFile.getAbsolutePath(), contentUri, System.currentTimeMillis() / 1000L);
       }
+      android.util.Log.i("MusicScanner", "audioResolved url=" + outputFile.getAbsolutePath() + " cached=false");
       return result;
   }
 
@@ -806,6 +827,13 @@ public class MusicScannerPlugin extends Plugin {
     e.extension = dot > 0 ? name.substring(dot + 1).toLowerCase() : "";
     e.sourceType = "media-store";
     e.sourceVersionKey = track.optString("sourceVersionKey", (e.mediaStoreId != null ? e.mediaStoreId : "") + ":" + e.size + ":" + e.dateModified);
+    if (track.has("albumId")) e.albumId = track.optLong("albumId");
+    e.albumArtUri = track.optString("albumArtUri", null);
+    if (track.has("bitDepth")) e.bitDepth = track.optInt("bitDepth");
+    if (track.has("sampleRate")) e.sampleRate = track.optInt("sampleRate");
+    if (track.has("bitrate")) e.bitrate = track.optInt("bitrate");
+    if (track.has("channels")) e.channels = track.optInt("channels");
+    if (track.has("isHiRes")) e.isHiRes = track.optBoolean("isHiRes");
     e.unavailable = track.optBoolean("unavailable", false);
     e.unavailableReason = track.optString("unavailableReason", null);
     e.lastSeenAt = track.optLong("lastSeenAt", now);
@@ -834,6 +862,13 @@ public class MusicScannerPlugin extends Plugin {
     o.put("mimeType", e.mimeType);
     o.put("dateModified", e.dateModified);
     o.put("sourceVersionKey", e.sourceVersionKey);
+    o.put("albumId", e.albumId);
+    o.put("albumArtUri", e.albumArtUri);
+    if (e.bitDepth != null) o.put("bitDepth", e.bitDepth);
+    if (e.sampleRate != null) o.put("sampleRate", e.sampleRate);
+    if (e.bitrate != null) o.put("bitrate", e.bitrate);
+    if (e.channels != null) o.put("channels", e.channels);
+    if (e.isHiRes != null) o.put("isHiRes", e.isHiRes);
     o.put("unavailable", e.unavailable);
     o.put("unavailableReason", e.unavailableReason);
     o.put("lastSeenAt", e.lastSeenAt);
@@ -969,11 +1004,13 @@ public class MusicScannerPlugin extends Plugin {
         fileObj.put("mimeType", mimeType != null ? mimeType : "audio/mpeg");
         fileObj.put("contentUri", contentUri.toString());
         fileObj.put("albumArtUri", albumArtUri.toString());
+        fileObj.put("albumId", albumId);
         fileObj.put("dateModified", dateModified);
         fileObj.put("sourceVersionKey", id + ":" + size + ":" + dateModified);
         if (formatInfo.bitDepth != null) fileObj.put("bitDepth", formatInfo.bitDepth);
         if (formatInfo.sampleRate != null) fileObj.put("sampleRate", formatInfo.sampleRate);
         if (formatInfo.bitrate != null) fileObj.put("bitrate", formatInfo.bitrate);
+        if (formatInfo.channels != null) fileObj.put("channels", formatInfo.channels);
         fileObj.put("isHiRes", isHiRes);
 
         musicFiles.put(fileObj);
