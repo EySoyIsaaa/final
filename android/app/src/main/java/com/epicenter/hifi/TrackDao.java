@@ -45,6 +45,9 @@ public interface TrackDao {
   @Query("UPDATE tracks SET cachedFilePath = :cachedFilePath, localUri = :localUri, updatedAt = :now WHERE stableId = :stableId")
   void updateCachePaths(String stableId, String cachedFilePath, String localUri, long now);
 
+  @Query("UPDATE tracks SET playbackError = :playbackError, requiresResync = :requiresResync, playbackErrorReason = :reason, updatedAt = :now WHERE stableId = :stableId")
+  void markPlaybackError(String stableId, boolean playbackError, boolean requiresResync, String reason, long now);
+
   @Query("UPDATE tracks SET missingCount = missingCount + 1, missingSince = CASE WHEN missingSince IS NULL OR missingSince=0 THEN :now ELSE missingSince END, scanCompleteness=:scanCompleteness, updatedAt=:now WHERE stableId = :stableId")
   void markMissing(String stableId, long now, String scanCompleteness);
 

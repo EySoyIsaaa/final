@@ -46,6 +46,9 @@ public class TrackEntity {
   public Boolean isHiRes;
   public boolean unavailable;
   public String unavailableReason;
+  public boolean playbackError;
+  public boolean requiresResync;
+  public String playbackErrorReason;
   public long lastSeenAt;
   public Long missingSince;
   public int missingCount;

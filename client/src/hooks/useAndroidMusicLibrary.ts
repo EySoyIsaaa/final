@@ -274,7 +274,11 @@ export function useAndroidMusicLibrary() {
       
       if (result?.filePath) {
         // Convertir la ruta del archivo a una URL que Capacitor puede servir
-        const fileUrl = (window as any).Capacitor.convertFileSrc(result.filePath);
+        const baseUrl = (window as any).Capacitor.convertFileSrc(result.filePath);
+        const cacheBuster = typeof result?.resolvedUrl === 'string' && result.resolvedUrl.includes('?')
+          ? result.resolvedUrl.substring(result.resolvedUrl.indexOf('?'))
+          : '';
+        const fileUrl = `${baseUrl}${cacheBuster}`;
         logger.debug('✅ URL de archivo obtenida', { fileUrl, cached: result.cached });
         return fileUrl;
       }

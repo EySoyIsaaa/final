@@ -303,21 +303,8 @@ public class MusicScannerPlugin extends Plugin {
           seen.add(incoming.stableId);
         }
 
-        if ("complete".equals(finalScanCompleteness)) {
-          for (TrackEntity e : existing) {
-            if (seen.contains(e.stableId)) continue;
-            if ("manual-uri".equals(e.sourceType)) continue;
-            missingCandidates.incrementAndGet();
-            int nextMissing = e.missingCount + 1;
-            long missingSince = e.missingSince != null && e.missingSince > 0 ? e.missingSince : now;
-            dao().markMissing(e.stableId, now, "complete");
-            if (nextMissing >= 3 && (now - missingSince) >= 24 * 60 * 60) {
-              dao().markUnavailable(e.stableId, true, "missing_from_repeated_scans", now);
-              unavailableMarked.incrementAndGet();
-            } else {
-              preserved.incrementAndGet();
-            }
-          }
+        for (TrackEntity e : existing) {
+          if (!seen.contains(e.stableId)) preserved.incrementAndGet();
         }
       });
       if ("complete".equals(scanCompleteness)) {
@@ -325,7 +312,7 @@ public class MusicScannerPlugin extends Plugin {
       }
 
       int count = dao().countAll();
-      android.util.Log.i("MusicScanner", "scanStats scannedCount=" + scannedCount + " existingCount=" + existingCount + " lastFullScanCount=" + lastFullScanCount + " added=" + added.get() + " updated=" + updated.get() + " preserved=" + preserved.get() + " missingCandidates=" + missingCandidates.get() + " unavailableMarked=" + unavailableMarked.get() + " scanCompleteness=" + scanCompleteness + " reason=" + completenessReason);
+      android.util.Log.i("MusicScanner", "scanStats scannedCount=" + scannedCount + " existingCount=" + existingCount + " lastFullScanCount=" + lastFullScanCount + " syncAdded=" + added.get() + " syncUpdated=" + updated.get() + " syncPreserved=" + preserved.get() + " scanCompleteness=" + scanCompleteness + " reason=" + completenessReason);
       JSObject result = new JSObject();
       result.put("count", count);
       result.put("added", added.get());
@@ -583,6 +570,7 @@ public class MusicScannerPlugin extends Plugin {
         extension = ".ogg";
       }
       
+      long resolveStart = System.currentTimeMillis();
       TrackEntity linked = dao().getByStableId(trackId);
       if (linked == null) linked = dao().getByMediaStoreId(trackId);
       if (linked == null) linked = dao().findBySourceUri(contentUri);
@@ -591,11 +579,12 @@ public class MusicScannerPlugin extends Plugin {
         if (linkedCache.exists() && linkedCache.length() > 0 && (expectedSize == null || expectedSize <= 0 || linkedCache.length() == expectedSize)) {
           JSObject fast = new JSObject();
           fast.put("filePath", linkedCache.getAbsolutePath());
+          fast.put("resolvedUrl", linkedCache.getAbsolutePath() + "?cb=" + System.currentTimeMillis());
           fast.put("mimeType", mimeType);
           fast.put("cached", true);
           fast.put("cacheKey", "linked-fast-path");
           fast.put("resolvedStableId", linked.stableId);
-          android.util.Log.i("MusicScanner", "audioResolvedFastPath url=" + linkedCache.getAbsolutePath());
+          android.util.Log.i("MusicScanner", "playbackResolvedUrl=" + linkedCache.getAbsolutePath() + " playbackResolveTimeMs=" + (System.currentTimeMillis() - resolveStart));
           return fast;
         }
       }
@@ -605,7 +594,7 @@ public class MusicScannerPlugin extends Plugin {
       String stableForCache = linked != null ? linked.stableId : sha1(trackId + "|" + contentUri);
       String cacheIdentity = stableForCache + "|" + contentUri + "|" + (sourceVersionKey != null ? sourceVersionKey : trackId);
       String cacheHash = sha1(cacheIdentity);
-      android.util.Log.i("MusicScanner", "audioResolve trackId=" + trackId + " stableId=" + stableForCache + " sourceUri=" + contentUri + " sourceVersionKey=" + sourceVersionKey + " cacheKey=" + cacheHash + " linkedCachedFilePath=" + (linked != null ? linked.cachedFilePath : ""));
+      android.util.Log.i("MusicScanner", "playbackTrackId=" + trackId + " stableId=" + stableForCache + " sourceUri=" + contentUri + " sourceVersionKey=" + sourceVersionKey + " cacheKey=" + cacheHash + " linkedCachedFilePath=" + (linked != null ? linked.cachedFilePath : ""));
 
       // Crear archivo en caché
       File cacheDir = getAudioCacheDir();
@@ -624,6 +613,7 @@ public class MusicScannerPlugin extends Plugin {
         android.util.Log.d("MusicScanner", "✅ Archivo ya en caché: " + outputFile.getAbsolutePath());
         JSObject result = new JSObject();
         result.put("filePath", outputFile.getAbsolutePath());
+        result.put("resolvedUrl", outputFile.getAbsolutePath() + "?cb=" + System.currentTimeMillis());
         result.put("mimeType", mimeType);
         result.put("cached", true);
         result.put("cacheKey", cacheHash);
@@ -631,7 +621,7 @@ public class MusicScannerPlugin extends Plugin {
         if (linked != null) {
           dao().updateCachePaths(linked.stableId, outputFile.getAbsolutePath(), contentUri, System.currentTimeMillis() / 1000L);
         }
-        android.util.Log.i("MusicScanner", "audioResolved url=" + outputFile.getAbsolutePath() + " cached=true");
+        android.util.Log.i("MusicScanner", "playbackResolvedUrl=" + outputFile.getAbsolutePath() + " playbackResolveTimeMs=" + (System.currentTimeMillis() - resolveStart));
         return result;
         }
       }
@@ -644,6 +634,8 @@ public class MusicScannerPlugin extends Plugin {
         inputStream = resolver.openInputStream(uri);
       }
       if (inputStream == null) {
+        if (linked != null) dao().markPlaybackError(linked.stableId, true, true, "open_input_stream_failed", System.currentTimeMillis() / 1000L);
+        android.util.Log.e("MusicScanner", "playbackErrorReason=open_input_stream_failed stableId=" + stableForCache);
         throw new Exception("Could not open audio file");
       }
 
@@ -687,6 +679,7 @@ public class MusicScannerPlugin extends Plugin {
 
       JSObject result = new JSObject();
       result.put("filePath", outputFile.getAbsolutePath());
+      result.put("resolvedUrl", outputFile.getAbsolutePath() + "?cb=" + System.currentTimeMillis());
       result.put("mimeType", mimeType);
       result.put("size", totalBytes);
       result.put("cached", false);
@@ -695,7 +688,8 @@ public class MusicScannerPlugin extends Plugin {
       if (linked != null) {
         dao().updateCachePaths(linked.stableId, outputFile.getAbsolutePath(), contentUri, System.currentTimeMillis() / 1000L);
       }
-      android.util.Log.i("MusicScanner", "audioResolved url=" + outputFile.getAbsolutePath() + " cached=false");
+      if (linked != null) dao().markPlaybackError(linked.stableId, false, false, null, System.currentTimeMillis() / 1000L);
+      android.util.Log.i("MusicScanner", "playbackResolvedUrl=" + outputFile.getAbsolutePath() + " playbackResolveTimeMs=" + (System.currentTimeMillis() - resolveStart));
       return result;
   }
 
